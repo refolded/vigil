@@ -318,8 +318,22 @@
                  style="padding:16px 20px">
 
               <!-- Settings row -->
-              <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e">
+              <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e">
                 <span class="section-label">Settings</span>
+
+                <!-- Idle timeout -->
+                <div style="display:flex;align-items:center;gap:7px">
+                  <label style="font-size:11px;color:#71717a;white-space:nowrap">Idle timeout</label>
+                  <input type="number" min="10"
+                         :value="proxy.idle_timeout"
+                         @change="setIdleTimeout(proxy, $event.target.value)"
+                         @keydown.enter="$event.target.blur()"
+                         class="field field-mono"
+                         style="width:72px;padding:4px 7px;font-size:12px">
+                  <span style="font-size:11px;color:#52525b">s</span>
+                </div>
+
+                <!-- Auto-unload toggle -->
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer"
                        @click.prevent="setAutoUnload(proxy, !proxy.auto_unload)">
                   <div class="toggle-track" :class="proxy.auto_unload ? 'on' : ''">
@@ -664,6 +678,19 @@ function app() {
       this.notify(data.auto_unload
         ? `/${proxy.subpath} unloaded — cold-starts on next request`
         : `/${proxy.subpath} restarted`);
+      this.loadProxies();
+    },
+
+    async setIdleTimeout(proxy, value) {
+      const v = parseInt(value);
+      if (!v || v < 10) { this.notify('Idle timeout must be ≥ 10s', true); return; }
+      if (v === proxy.idle_timeout) return;
+      await fetch(`/api/proxies/${proxy.subpath}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idle_timeout: v }),
+      });
+      this.notify(`/${proxy.subpath} idle timeout → ${v}s`);
       this.loadProxies();
     },
 
