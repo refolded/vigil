@@ -1,7 +1,8 @@
 import asyncio
+import json
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Set
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -17,6 +18,64 @@ STATIC_DIR = Path(__file__).parent.parent / "static"
 manager = ProxyManager()
 app = FastAPI(title="Docker Idle Proxy", docs_url="/api/docs")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# ---------------------------------------------------------------------------
+# SSE broadcast
+# ---------------------------------------------------------------------------
+
+_sse_queues: Set[asyncio.Queue] = set()
+_main_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+@app.on_event("startup")
+async def _startup():
+    global _main_loop
+    _main_loop = asyncio.get_running_loop()
+    manager._on_change = _schedule_broadcast
+
+
+def _schedule_broadcast():
+    """Call from any thread to push a proxy-list update to all SSE clients."""
+    if _main_loop and _main_loop.is_running():
+        asyncio.run_coroutine_threadsafe(_broadcast(), _main_loop)
+
+
+async def _broadcast():
+    if not _sse_queues:
+        return
+    payload = "data: " + json.dumps([p.to_status_dict() for p in manager.list()]) + "\n\n"
+    dead: Set[asyncio.Queue] = set()
+    for q in list(_sse_queues):
+        try:
+            q.put_nowait(payload)
+        except asyncio.QueueFull:
+            dead.add(q)
+    _sse_queues.difference_update(dead)
+
+
+@app.get("/api/events", include_in_schema=False)
+async def sse_events(request: Request):
+    q: asyncio.Queue = asyncio.Queue(maxsize=20)
+    _sse_queues.add(q)
+
+    async def stream():
+        try:
+            # Send current state immediately on connect
+            yield "data: " + json.dumps([p.to_status_dict() for p in manager.list()]) + "\n\n"
+            while True:
+                try:
+                    msg = await asyncio.wait_for(q.get(), timeout=25)
+                    yield msg
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"
+        finally:
+            _sse_queues.discard(q)
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 HOP_BY_HOP = frozenset([
     "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
@@ -81,6 +140,7 @@ async def add_proxy(body: ProxyBody):
     if manager.get(subpath):
         raise HTTPException(409, f"/{subpath} already configured")
     cfg = manager.add(subpath, body.container, body.backend_url, body.idle_timeout, body.auto_unload)
+    asyncio.create_task(_broadcast())
     return cfg.to_dict()
 
 
@@ -90,6 +150,7 @@ async def patch_proxy(subpath: str, body: ProxyPatch):
     cfg = manager.update(subpath, **updates)
     if cfg is None:
         raise HTTPException(404, f"No proxy for /{subpath}")
+    asyncio.create_task(_broadcast())
     return cfg.to_status_dict()
 
 
@@ -97,6 +158,7 @@ async def patch_proxy(subpath: str, body: ProxyPatch):
 async def remove_proxy(subpath: str):
     if not manager.remove(subpath):
         raise HTTPException(404, f"No proxy for /{subpath}")
+    asyncio.create_task(_broadcast())
     return {"ok": True}
 
 
@@ -106,6 +168,7 @@ async def stop_proxy(subpath: str):
     if cfg is None:
         raise HTTPException(404, f"No proxy for /{subpath}")
     await asyncio.get_running_loop().run_in_executor(None, manager.stop, cfg)
+    asyncio.create_task(_broadcast())
     return {"ok": True}
 
 
@@ -118,6 +181,7 @@ async def unload_proxy(subpath: str):
         await asyncio.get_running_loop().run_in_executor(None, manager.unload, cfg)
     except RuntimeError as e:
         raise HTTPException(502, str(e))
+    asyncio.create_task(_broadcast())
     return {"ok": True, "auto_unload": cfg.auto_unload}
 
 # ---------------------------------------------------------------------------
@@ -145,6 +209,7 @@ async def proxy(request: Request, full_path: str):
 
     cfg.last_activity = time.time()
     cfg.active_requests += 1
+    asyncio.create_task(_broadcast())
     req_start = time.time()
     log_path = f"/{rest}" + (f"?{request.url.query}" if request.url.query else "")
 
@@ -222,6 +287,7 @@ async def proxy(request: Request, full_path: str):
                 resp_body=resp_body_str,
                 resp_size=resp_capture["total"],
             )
+            asyncio.create_task(_broadcast())
             await upstream_resp.aclose()
             await client.aclose()
 

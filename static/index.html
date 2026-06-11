@@ -503,6 +503,7 @@ function app() {
     open:            {},
     reqOpen:         {},
     containerSearch: '',
+    _tick:           0,
     form: { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false },
     toast: { visible: false, msg: '', err: false },
     _toastTimer: null,
@@ -517,12 +518,24 @@ function app() {
     },
 
     async init() {
-      await this.refresh();
-      setInterval(() => this.loadProxies(), 4000);
+      await this.loadContainers();
+      this._connectSSE();
+      setInterval(() => this._tick++, 1000);
+    },
+
+    _connectSSE() {
+      if (this._es) this._es.close();
+      const es = new EventSource('/api/events');
+      es.onmessage = (e) => {
+        try { this.proxies = JSON.parse(e.data); } catch (_) {}
+      };
+      this._es = es;
+      // EventSource reconnects automatically on error — no manual retry needed
     },
 
     async refresh() {
-      await Promise.all([this.loadContainers(), this.loadProxies()]);
+      await this.loadContainers();
+      try { this.proxies = await fetch('/api/proxies').then(r => r.json()); } catch(e) {}
     },
 
     async loadContainers() {
@@ -582,14 +595,21 @@ function app() {
       this.notify(`Copied ${this.proxyUrl(proxy)}`);
     },
 
+    idleSec(proxy) {
+      void this._tick; // reactive dependency — recomputes every second
+      if (!proxy.last_activity) return null;
+      return Math.max(0, Date.now() / 1000 - proxy.last_activity);
+    },
+
     idlePct(proxy) {
-      if (proxy.idle_seconds === null || proxy.idle_seconds === undefined) return 100;
-      return Math.max(0, 100 - (proxy.idle_seconds / proxy.idle_timeout) * 100);
+      const s = this.idleSec(proxy);
+      if (s === null) return 100;
+      return Math.max(0, 100 - (s / proxy.idle_timeout) * 100);
     },
 
     idleColor(proxy) {
       if (!proxy.container_up) return '#27272a';
-      if (proxy.idle_seconds === null || proxy.idle_seconds === undefined) return '#4ade80';
+      if (this.idleSec(proxy) === null) return '#4ade80';
       const p = this.idlePct(proxy);
       if (p > 60) return '#4ade80';
       if (p > 25) return '#fbbf24';
@@ -598,8 +618,9 @@ function app() {
 
     idleTooltip(proxy) {
       if (!proxy.container_up) return 'Container stopped';
-      if (proxy.idle_seconds === null || proxy.idle_seconds === undefined) return 'No requests yet';
-      return `Idle: ${Math.round(proxy.idle_seconds)}s / ${proxy.idle_timeout}s`;
+      const s = this.idleSec(proxy);
+      if (s === null) return 'No requests yet';
+      return `Idle: ${Math.round(s)}s / ${proxy.idle_timeout}s`;
     },
 
     statusLabel(proxy) {

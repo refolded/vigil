@@ -48,7 +48,7 @@ class ProxyConfig:
             **self.to_dict(),
             "container_up": self.container_up,
             "active_requests": self.active_requests,
-            "idle_seconds": None if self.last_activity == 0.0 else round(time.time() - self.last_activity, 1),
+            "last_activity": self.last_activity if self.last_activity != 0.0 else None,
             "request_log": list(self.request_log),
         }
 
@@ -92,8 +92,16 @@ class ProxyManager:
     def __init__(self):
         self._proxies: Dict[str, ProxyConfig] = {}
         self._lock = threading.Lock()
+        self._on_change: Optional[callable] = None
         self._load()
         threading.Thread(target=self._idle_watcher, daemon=True).start()
+
+    def _notify(self):
+        if self._on_change:
+            try:
+                self._on_change()
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Persistence
@@ -213,6 +221,7 @@ class ProxyManager:
                 )
             cfg.container_up = True
             print(f"[manager] {cfg.container!r} ready.", flush=True)
+            self._notify()
 
     def stop(self, cfg: ProxyConfig):
         """Stop the container, freeing VRAM. Next proxy request will cold-start it."""
@@ -221,6 +230,7 @@ class ProxyManager:
             subprocess.run(["docker", "stop", cfg.container], capture_output=True)
             cfg.container_up = False
             print(f"[manager] {cfg.container!r} stopped.", flush=True)
+        self._notify()
 
     def restart(self, cfg: ProxyConfig):
         """Stop then immediately start the container (model reloads, VRAM stays)."""
@@ -234,6 +244,7 @@ class ProxyManager:
             cfg.container_up = True
             cfg.last_activity = time.time()
             print(f"[manager] {cfg.container!r} restarted.", flush=True)
+        self._notify()
 
     def unload(self, cfg: ProxyConfig):
         """Respects auto_unload: stop-only if on, restart if off."""
@@ -256,6 +267,7 @@ class ProxyManager:
                     if cfg.container_up != actual:
                         print(f"[manager] {cfg.container!r} state drift: {cfg.container_up!r} → {actual!r}", flush=True)
                         cfg.container_up = actual
+                        self._notify()
 
                 if not cfg.container_up or cfg.last_activity == 0.0:
                     continue
@@ -269,11 +281,14 @@ class ProxyManager:
                         print(f"[manager] {cfg.container!r} idle {idle:.0f}s — stopping (auto-unload)", flush=True)
                         subprocess.run(["docker", "stop", cfg.container], capture_output=True)
                         cfg.container_up = False
+                        self._notify()
                     else:
                         print(f"[manager] {cfg.container!r} idle {idle:.0f}s — restarting", flush=True)
                         subprocess.run(["docker", "stop", cfg.container], capture_output=True)
                         cfg.container_up = False
+                        self._notify()
                         subprocess.run(["docker", "start", cfg.container], capture_output=True)
                         self._wait_for_ready(cfg)
                         cfg.container_up = True
                         cfg.last_activity = time.time()
+                        self._notify()
