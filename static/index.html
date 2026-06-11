@@ -369,10 +369,20 @@
                         <span style="background:#18181b;border:1px solid #27272a;padding:2px 6px;border-radius:4px;color:#a1a1aa;font-size:11px;flex-shrink:0"
                               x-text="req.method"></span>
                         <span style="color:#d4d4d8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="req.path"></span>
-                        <span style="flex-shrink:0;font-weight:500;min-width:32px;text-align:right"
+                        <!-- Status: pulsing dots while pending, code when done -->
+                        <span x-show="req.pending"
+                              style="flex-shrink:0;min-width:32px;text-align:right;color:#52525b;animation:breathe 1.2s ease-in-out infinite">···</span>
+                        <span x-show="!req.pending"
+                              style="flex-shrink:0;font-weight:500;min-width:32px;text-align:right"
                               :style="req.status<300?'color:#4ade80':req.status<400?'color:#fbbf24':'color:#f87171'"
                               x-text="req.status"></span>
-                        <span style="color:#71717a;min-width:56px;text-align:right;flex-shrink:0" x-text="`${req.duration_ms}ms`"></span>
+                        <!-- Duration: live elapsed while pending, final ms when done -->
+                        <span x-show="req.pending"
+                              style="color:#52525b;min-width:56px;text-align:right;flex-shrink:0"
+                              x-text="fmtElapsed(req.ts)"></span>
+                        <span x-show="!req.pending"
+                              style="color:#71717a;min-width:56px;text-align:right;flex-shrink:0"
+                              x-text="`${req.duration_ms}ms`"></span>
                       </div>
                       <!-- Expanded request/response details -->
                       <div x-show="reqOpen[proxy.subpath + '_' + req.ts]"
@@ -394,18 +404,25 @@
                           <!-- Response body -->
                           <div>
                             <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:6px;font-weight:500">Response</div>
-                            <div x-show="req.resp_ct" style="font-size:10.5px;color:#71717a;margin-bottom:6px">
-                              <span style="color:#52525b">content-type: </span><span x-text="req.resp_ct"></span>
-                              <template x-if="req.resp_size > 0">
-                                <span> &middot; <span x-text="fmtSize(req.resp_size)"></span></span>
-                              </template>
-                            </div>
-                            <template x-if="req.resp_body">
-                              <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.resp_body)"></pre>
+                            <template x-if="req.pending">
+                              <div style="color:#52525b;font-size:10.5px;padding:4px 0;animation:breathe 1.2s ease-in-out infinite">waiting for response…</div>
                             </template>
-                            <template x-if="!req.resp_body">
-                              <div style="color:#52525b;font-size:10.5px;padding:4px 0"
-                                   x-text="req.resp_size > 0 ? `(binary · ${fmtSize(req.resp_size)})` : '(no body)'"></div>
+                            <template x-if="!req.pending">
+                              <div>
+                                <div x-show="req.resp_ct" style="font-size:10.5px;color:#71717a;margin-bottom:6px">
+                                  <span style="color:#52525b">content-type: </span><span x-text="req.resp_ct"></span>
+                                  <template x-if="req.resp_size > 0">
+                                    <span> &middot; <span x-text="fmtSize(req.resp_size)"></span></span>
+                                  </template>
+                                </div>
+                                <template x-if="req.resp_body">
+                                  <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.resp_body)"></pre>
+                                </template>
+                                <template x-if="!req.resp_body">
+                                  <div style="color:#52525b;font-size:10.5px;padding:4px 0"
+                                       x-text="req.resp_size > 0 ? `(binary · ${fmtSize(req.resp_size)})` : '(no body)'"></div>
+                                </template>
+                              </div>
                             </template>
                           </div>
                         </div>
@@ -723,6 +740,12 @@ function app() {
       });
       this.notify(`/${proxy.subpath} unload-on-idle ${value ? 'enabled' : 'disabled'}`);
       this.loadProxies();
+    },
+
+    fmtElapsed(ts) {
+      void this._tick;
+      const ms = Date.now() - ts * 1000;
+      return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
     },
 
     fmtAge(ts) {

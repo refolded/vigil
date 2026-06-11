@@ -33,6 +33,7 @@ class ProxyConfig:
         self.container_up: Optional[bool] = None  # None = unknown
         self.request_log: collections.deque = collections.deque(maxlen=10)
         self._lock = threading.Lock()
+        self._req_counter: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -52,30 +53,51 @@ class ProxyConfig:
             "request_log": list(self.request_log),
         }
 
-    def log_request(
+    def log_request_start(
         self,
         method: str,
         path: str,
-        status: int,
-        duration_ms: int,
         req_content_type: str = "",
         req_body: Optional[str] = None,
+    ) -> int:
+        req_id = self._req_counter
+        self._req_counter += 1
+        self.request_log.append({
+            "id": req_id,
+            "method": method,
+            "path": path,
+            "ts": time.time(),
+            "pending": True,
+            "req_ct": req_content_type,
+            "req_body": req_body,
+            "status": None,
+            "duration_ms": None,
+            "resp_ct": "",
+            "resp_body": None,
+            "resp_size": 0,
+        })
+        return req_id
+
+    def log_request_end(
+        self,
+        req_id: int,
+        status: int,
+        duration_ms: int,
         resp_content_type: str = "",
         resp_body: Optional[str] = None,
         resp_size: int = 0,
     ):
-        self.request_log.append({
-            "method": method,
-            "path": path,
-            "status": status,
-            "duration_ms": duration_ms,
-            "ts": time.time(),
-            "req_ct": req_content_type,
-            "req_body": req_body,
-            "resp_ct": resp_content_type,
-            "resp_body": resp_body,
-            "resp_size": resp_size,
-        })
+        for entry in self.request_log:
+            if entry.get("id") == req_id:
+                entry.update({
+                    "pending": False,
+                    "status": status,
+                    "duration_ms": duration_ms,
+                    "resp_ct": resp_content_type,
+                    "resp_body": resp_body,
+                    "resp_size": resp_size,
+                })
+                break
 
     @classmethod
     def from_dict(cls, d: dict) -> "ProxyConfig":

@@ -209,7 +209,6 @@ async def proxy(request: Request, full_path: str):
 
     cfg.last_activity = time.time()
     cfg.active_requests += 1
-    asyncio.create_task(_broadcast())
     req_start = time.time()
     log_path = f"/{rest}" + (f"?{request.url.query}" if request.url.query else "")
 
@@ -235,6 +234,9 @@ async def proxy(request: Request, full_path: str):
         if len(body) > MAX_BODY_CAPTURE:
             req_body_str += f"\n\n[…{len(body) - MAX_BODY_CAPTURE} bytes truncated]"
 
+    req_id = cfg.log_request_start(request.method, log_path, req_ct, req_body_str)
+    asyncio.create_task(_broadcast())
+
     client = httpx.AsyncClient(timeout=None)
     try:
         upstream_req = client.build_request(
@@ -248,6 +250,8 @@ async def proxy(request: Request, full_path: str):
         await client.aclose()
         cfg.active_requests -= 1
         cfg.container_up = None  # force re-check: container may have crashed
+        cfg.log_request_end(req_id, 502, round((time.time() - req_start) * 1000))
+        asyncio.create_task(_broadcast())
         raise HTTPException(502, str(exc))
 
     resp_headers = {
@@ -278,11 +282,9 @@ async def proxy(request: Request, full_path: str):
                 if resp_capture["total"] > MAX_BODY_CAPTURE:
                     captured += f"\n\n[…{resp_capture['total'] - MAX_BODY_CAPTURE} bytes truncated]"
                 resp_body_str = captured
-            cfg.log_request(
-                request.method, log_path, status_code,
+            cfg.log_request_end(
+                req_id, status_code,
                 round((time.time() - req_start) * 1000),
-                req_content_type=req_ct,
-                req_body=req_body_str,
                 resp_content_type=resp_ct,
                 resp_body=resp_body_str,
                 resp_size=resp_capture["total"],
