@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vigil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  window.tailwind = {
+    config: {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['"JetBrains Mono"', '"SF Mono"', '"Fira Code"', 'Consolas', 'monospace'],
+          }
+        }
+      }
+    }
+  };
+</script>
+<script src="/static/vendor/tailwind.js"></script>
+<script defer src="/static/vendor/alpine.min.js"></script>
+<style>
+  * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
+  [x-cloak] { display: none !important; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    background: #0c0c0d;
+    color: #d4d4d8;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2e; border-radius: 2px; }
+
+  /* ── Card ── */
+  .card {
+    background: #111113;
+    border: 1px solid #1f1f23;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 10px 16px;
+    background: #0f0f11;
+    border-bottom: 1px solid #1a1a1e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Table ── */
+  .tbl-head th {
+    padding: 8px 16px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #52525b;
+    text-align: left;
+    background: #0d0d0f;
+    border-bottom: 1px solid #1a1a1e;
+  }
+  .tbl-row { border-top: 1px solid #18181b; transition: background 0.1s; }
+  .tbl-row:hover { background: rgba(255,255,255,0.025); }
+  .tbl-row td { padding: 10px 16px; }
+
+  /* ── Form inputs ── */
+  .field {
+    background: #0c0c0d;
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: #e4e4e7;
+    font-size: 12.5px;
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .field::placeholder { color: #3f3f46; }
+  .field:focus { outline: none; border-color: #3f3f46; box-shadow: 0 0 0 2px rgba(255,255,255,0.04); }
+  .field-mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 11.5px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 5px 11px; border-radius: 6px; font-size: 12px;
+    font-weight: 500; cursor: pointer; transition: all 0.12s; border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: #e4e4e7; color: #09090b;
+    border-color: #e4e4e7;
+  }
+  .btn-primary:hover { background: #fff; border-color: #fff; }
+  .btn-ghost {
+    background: transparent; color: #a1a1aa;
+    border-color: #27272a;
+  }
+  .btn-ghost:hover { background: #18181b; color: #e4e4e7; border-color: #3f3f46; }
+  .btn-danger {
+    background: transparent; color: #f87171;
+    border-color: #3f1f1f;
+  }
+  .btn-danger:hover { background: #2a1515; border-color: #7f2020; }
+
+  /* ── Toggle ── */
+  .toggle-track {
+    width: 32px; height: 18px; border-radius: 9px;
+    background: #27272a; position: relative;
+    transition: background 0.2s; cursor: pointer; flex-shrink: 0;
+  }
+  .toggle-track.on { background: #3f3f46; }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 12px; height: 12px; border-radius: 6px;
+    background: #71717a; transition: transform 0.2s, background 0.2s;
+  }
+  .toggle-track.on .toggle-thumb { transform: translateX(14px); background: #e4e4e7; }
+
+  /* ── Status dot ── */
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-green { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.4); }
+  .dot-gray  { background: #3f3f46; }
+  .dot-blue  { background: #60a5fa; box-shadow: 0 0 6px rgba(96,165,250,0.4); }
+  .dot-amber { background: #fbbf24; }
+
+  @keyframes breathe {
+    0%,100% { opacity:1; } 50% { opacity:.55; }
+  }
+  .dot-green, .dot-blue { animation: breathe 2.5s ease-in-out infinite; }
+
+  /* ── Idle bar ── */
+  .idle-bar-track {
+    height: 3px; background: #1f1f23; border-radius: 2px;
+    overflow: hidden; width: 60px; flex-shrink: 0;
+  }
+  .idle-bar-fill { height: 100%; border-radius: 2px; transition: width 1s linear, background 0.8s; }
+
+  /* ── Accordion row ── */
+  .proxy-row { transition: background 0.1s; cursor: pointer; }
+  .proxy-row:hover { background: rgba(255,255,255,0.02); }
+  .proxy-accordion { background: #0a0a0b; border-top: 1px solid #1a1a1e; }
+
+  /* ── Badge pill ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #52525b;
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid #1a1a1e; margin: 0; }
+</style>
+</head>
+
+<body x-data="app()" x-init="init()" x-cloak>
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header style="background:#0a0a0b;border-bottom:1px solid #1a1a1e;position:sticky;top:0;z-index:20">
+  <div style="max-width:1360px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center;gap:12px">
+    <!-- Eye / vigil icon -->
+    <svg width="22" height="16" viewBox="0 0 22 16" fill="none" style="flex-shrink:0">
+      <path d="M1 8C3.5 3 7 1 11 1s7.5 2 10 7c-2.5 5-6 7-10 7S3.5 13 1 8z"
+            stroke="#71717a" stroke-width="1.5" stroke-linejoin="round"/>
+      <circle cx="11" cy="8" r="3" stroke="#a1a1aa" stroke-width="1.5"/>
+      <circle cx="11" cy="8" r="1" fill="#a1a1aa"/>
+    </svg>
+    <span style="font-size:14px;font-weight:600;color:#f4f4f5;letter-spacing:-0.02em">Vigil</span>
+    <span style="color:#3f3f46;font-size:12px" class="hidden sm:block">watch. sleep. wake.</span>
+    <div style="flex:1"></div>
+    <button @click="refresh()" class="btn btn-ghost" style="gap:6px">
+      <span>↻</span> Refresh
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ MAIN ════════════════════════════ -->
+<main style="max-width:1360px;margin:0 auto;padding:24px">
+  <div class="grid gap-5 items-start" style="grid-template-columns:1fr 1fr" id="main-grid">
+
+    <!-- ──────────── Containers ──────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">Containers</span>
+        <span style="font-size:11px;color:#52525b;background:#18181b;border:1px solid #27272a;padding:1px 7px;border-radius:10px" x-text="containers.length"></span>
+        <div style="flex:1"></div>
+        <button @click="loadContainers()" class="btn btn-ghost" style="gap:5px;font-size:12px;padding:3px 9px" title="Reload container list">
+          <span style="font-size:13px;line-height:1">↻</span> Reload
+        </button>
+      </div>
+      <div style="padding:8px 12px;border-bottom:1px solid #1a1a1e">
+        <input x-model="containerSearch" type="text" placeholder="Filter by name or image…" spellcheck="false" class="field" style="font-size:12px;padding:5px 9px">
+      </div>
+
+      <table style="width:100%;border-collapse:collapse">
+        <thead class="tbl-head">
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Port</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-if="!filteredContainers.length">
+            <tr><td colspan="4" style="padding:32px;text-align:center;color:#71717a;font-size:12px" x-text="containerSearch ? 'No containers match filter' : 'No containers found'"></td></tr>
+          </template>
+          <template x-for="c in filteredContainers" :key="c.ID || c.Names">
+            <tr class="tbl-row">
+              <td>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e4e4e7;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                     x-text="(c.Names||c.Name||'').replace(/^\//,'')"></div>
+                <div style="font-size:11px;color:#52525b;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px" x-text="c.Image||''"></div>
+              </td>
+              <td>
+                <span class="pill"
+                      :style="containerPillStyle(c)">
+                  <span class="dot" :class="containerDot(c)"></span>
+                  <span x-text="(c.State||c.Status||'').toLowerCase().split(' ')[0]"></span>
+                </span>
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#71717a"
+                  x-text="parsePort(c.Ports||'')||'—'"></td>
+              <td style="text-align:right">
+                <button @click="prefill(c)" class="btn btn-ghost" style="font-size:11.5px;padding:4px 10px">
+                  Proxy →
+                </button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ──────────── Proxies ──────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">Active Proxies</span>
+        <span style="font-size:11px;color:#52525b;background:#18181b;border:1px solid #27272a;padding:1px 7px;border-radius:10px" x-text="proxies.length"></span>
+        <div style="flex:1"></div>
+        <button @click="loadProxies()" class="btn btn-ghost" style="gap:5px;font-size:12px;padding:3px 9px" title="Reload proxy status">
+          <span style="font-size:13px;line-height:1">↻</span> Reload
+        </button>
+      </div>
+
+      <!-- Proxy list -->
+      <div>
+        <template x-if="!proxies.length">
+          <div style="padding:40px 16px;text-align:center;color:#71717a;font-size:12px">No proxies configured — add one below</div>
+        </template>
+
+        <template x-for="proxy in proxies" :key="proxy.subpath">
+          <div>
+            <!-- Proxy header row -->
+            <div class="proxy-row" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid #18181b"
+                 @click="toggle(proxy.subpath)">
+
+              <!-- Arrow -->
+              <svg width="10" height="10" viewBox="0 0 10 10" style="flex-shrink:0;color:#52525b;transition:transform 0.15s"
+                   :style="open[proxy.subpath] ? 'transform:rotate(90deg)' : ''">
+                <path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+
+              <!-- Subpath — click to copy -->
+              <button @click.stop="copyUrl(proxy)"
+                      title="Click to copy proxy URL"
+                      style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:#e4e4e7;background:none;border:none;cursor:pointer;padding:0;transition:color 0.12s"
+                      onmouseover="this.style.color='#a1a1aa'"
+                      onmouseout="this.style.color='#e4e4e7'">
+                /<span x-text="proxy.subpath"></span>
+              </button>
+
+              <!-- Container -->
+              <span style="font-size:11.5px;color:#71717a;font-family:'JetBrains Mono',monospace;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                    x-text="proxy.container"></span>
+
+              <div style="flex:1"></div>
+
+              <!-- Status pill -->
+              <span class="pill" :style="statusPillStyle(proxy)">
+                <span class="dot" :class="statusDot(proxy)"></span>
+                <span x-text="statusLabel(proxy)"></span>
+              </span>
+
+              <!-- Idle bar -->
+              <div class="idle-bar-track" :title="idleTooltip(proxy)">
+                <div class="idle-bar-fill"
+                     :style="`width:${idlePct(proxy)}%;background:${idleColor(proxy)}`"></div>
+              </div>
+
+              <!-- Action buttons -->
+              <button @click.stop="unloadProxy(proxy)"
+                      class="btn btn-ghost"
+                      style="font-size:11.5px;padding:4px 9px;font-family:'JetBrains Mono',monospace"
+                      :title="proxy.auto_unload ? 'Stop container — frees VRAM, cold-starts on next request' : 'Restart container — model reloads, VRAM stays'"
+                      x-text="proxy.auto_unload ? '⏹ Unload' : '↺ Restart'">
+              </button>
+              <button @click.stop="removeProxy(proxy.subpath)" class="btn btn-danger" style="font-size:11.5px;padding:4px 9px">
+                Remove
+              </button>
+            </div>
+
+            <!-- Accordion content -->
+            <div class="proxy-accordion" x-show="open[proxy.subpath]"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 style="padding:16px 20px">
+
+              <!-- Settings row -->
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e">
+                <span class="section-label">Settings</span>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer"
+                       @click.prevent="setAutoUnload(proxy, !proxy.auto_unload)">
+                  <div class="toggle-track" :class="proxy.auto_unload ? 'on' : ''">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                  <span style="font-size:12px;color:#a1a1aa;user-select:none">Unload on idle</span>
+                </label>
+                <span style="font-size:11.5px;color:#52525b"
+                      x-text="proxy.auto_unload
+                        ? 'Stop on idle → cold-start on next request (frees VRAM)'
+                        : 'Restart on idle → model reloads, VRAM stays'">
+                </span>
+              </div>
+
+              <!-- Request log -->
+              <div class="section-label" style="margin-bottom:10px">Recent requests</div>
+
+              <template x-if="!proxy.request_log || !proxy.request_log.length">
+                <div style="font-size:12px;color:#71717a;padding:8px 0">No requests yet</div>
+              </template>
+
+              <template x-if="proxy.request_log && proxy.request_log.length">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">
+                  <template x-for="(req, i) in [...proxy.request_log].reverse()" :key="i">
+                    <div>
+                      <!-- Clickable summary row -->
+                      <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #18181b;cursor:pointer;user-select:none"
+                           @click="toggleReq(proxy.subpath + '_' + req.ts)">
+                        <span style="color:#3f3f46;width:10px;flex-shrink:0;font-size:9px;transition:transform .15s"
+                              :style="reqOpen[proxy.subpath + '_' + req.ts] ? 'transform:rotate(90deg)' : ''"
+                              >▶</span>
+                        <span style="color:#52525b;width:52px;flex-shrink:0" x-text="fmtAge(req.ts)"></span>
+                        <span style="background:#18181b;border:1px solid #27272a;padding:2px 6px;border-radius:4px;color:#a1a1aa;font-size:11px;flex-shrink:0"
+                              x-text="req.method"></span>
+                        <span style="color:#d4d4d8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="req.path"></span>
+                        <span style="flex-shrink:0;font-weight:500;min-width:32px;text-align:right"
+                              :style="req.status<300?'color:#4ade80':req.status<400?'color:#fbbf24':'color:#f87171'"
+                              x-text="req.status"></span>
+                        <span style="color:#71717a;min-width:56px;text-align:right;flex-shrink:0" x-text="`${req.duration_ms}ms`"></span>
+                      </div>
+                      <!-- Expanded request/response details -->
+                      <div x-show="reqOpen[proxy.subpath + '_' + req.ts]"
+                           style="display:none;padding:6px 0 14px 18px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                          <!-- Request body -->
+                          <div>
+                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:6px;font-weight:500">Request</div>
+                            <div x-show="req.req_ct" style="font-size:10.5px;color:#71717a;margin-bottom:6px">
+                              <span style="color:#52525b">content-type: </span><span x-text="req.req_ct"></span>
+                            </div>
+                            <template x-if="req.req_body">
+                              <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.req_body)"></pre>
+                            </template>
+                            <template x-if="!req.req_body">
+                              <div style="color:#52525b;font-size:10.5px;padding:4px 0">(no body)</div>
+                            </template>
+                          </div>
+                          <!-- Response body -->
+                          <div>
+                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:6px;font-weight:500">Response</div>
+                            <div x-show="req.resp_ct" style="font-size:10.5px;color:#71717a;margin-bottom:6px">
+                              <span style="color:#52525b">content-type: </span><span x-text="req.resp_ct"></span>
+                              <template x-if="req.resp_size > 0">
+                                <span> &middot; <span x-text="fmtSize(req.resp_size)"></span></span>
+                              </template>
+                            </div>
+                            <template x-if="req.resp_body">
+                              <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.resp_body)"></pre>
+                            </template>
+                            <template x-if="!req.resp_body">
+                              <div style="color:#52525b;font-size:10.5px;padding:4px 0"
+                                   x-text="req.resp_size > 0 ? `(binary · ${fmtSize(req.resp_size)})` : '(no body)'"></div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- ──────────── Add Proxy Form ──────────── -->
+      <div style="border-top:1px solid #1a1a1e;padding:16px;background:#0d0d0f">
+        <div class="section-label" style="margin-bottom:12px">Add Proxy</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:11px;color:#71717a">Container</label>
+            <select x-model="form.container" @change="onContainerSelect()" class="field field-mono">
+              <option value="">— select —</option>
+              <template x-for="c in containers" :key="c.ID">
+                <option :value="(c.Names||c.Name||'').replace(/^\//,'')"
+                        x-text="(c.Names||c.Name||'').replace(/^\//,'')"></option>
+              </template>
+            </select>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:11px;color:#71717a">Subpath</label>
+            <input id="f-subpath" x-model="form.subpath" type="text" placeholder="tts" spellcheck="false" class="field field-mono">
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;grid-column:span 2">
+            <label style="font-size:11px;color:#71717a">Backend URL</label>
+            <input x-model="form.backend_url" type="text" placeholder="http://localhost:9966" spellcheck="false" class="field field-mono">
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:11px;color:#71717a">Idle timeout (s)</label>
+            <input x-model.number="form.idle_timeout" type="number" min="10" class="field field-mono">
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;justify-content:flex-end">
+            <label style="font-size:11px;color:#71717a;opacity:0">.</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;height:33px"
+                   @click.prevent="form.auto_unload = !form.auto_unload">
+              <div class="toggle-track" :class="form.auto_unload ? 'on' : ''">
+                <div class="toggle-thumb"></div>
+              </div>
+              <span style="font-size:12px;color:#a1a1aa;user-select:none">Unload on idle</span>
+            </label>
+          </div>
+
+          <div style="grid-column:span 2;margin-top:2px">
+            <button @click="addProxy()" class="btn btn-primary" style="width:100%;padding:8px">
+              + Add Proxy
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
+<div x-show="toast.visible"
+     x-transition:enter="transition ease-out duration-150"
+     x-transition:enter-start="opacity-0 translate-y-1"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-100"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     style="position:fixed;bottom:20px;right:20px;padding:9px 16px;border-radius:8px;font-size:12.5px;z-index:50;pointer-events:none;max-width:360px"
+     :style="toast.err
+       ? 'background:#1a0f0f;border:1px solid #5a2020;color:#f87171'
+       : 'background:#18181b;border:1px solid #27272a;color:#d4d4d8'"
+     x-text="toast.msg">
+</div>
+
+<!-- ═══════════════════════════ RESPONSIVE ══════════════════════ -->
+<style>
+  @media (max-width: 900px) {
+    #main-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
+
+<script>
+function app() {
+  return {
+    containers:      [],
+    proxies:         [],
+    open:            {},
+    reqOpen:         {},
+    containerSearch: '',
+    form: { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false },
+    toast: { visible: false, msg: '', err: false },
+    _toastTimer: null,
+
+    get filteredContainers() {
+      const q = this.containerSearch.trim().toLowerCase();
+      if (!q) return this.containers;
+      return this.containers.filter(c =>
+        (c.Names || c.Name || '').toLowerCase().includes(q) ||
+        (c.Image || '').toLowerCase().includes(q)
+      );
+    },
+
+    async init() {
+      await this.refresh();
+      setInterval(() => this.loadProxies(), 4000);
+    },
+
+    async refresh() {
+      await Promise.all([this.loadContainers(), this.loadProxies()]);
+    },
+
+    async loadContainers() {
+      try { this.containers = await fetch('/api/containers').then(r => r.json()); } catch(e) {}
+    },
+
+    async loadProxies() {
+      try { this.proxies = await fetch('/api/proxies').then(r => r.json()); } catch(e) {}
+    },
+
+    toggle(subpath) {
+      this.open = { ...this.open, [subpath]: !this.open[subpath] };
+    },
+
+    toggleReq(key) {
+      this.reqOpen = { ...this.reqOpen, [key]: !this.reqOpen[key] };
+    },
+
+    prettyBody(str) {
+      if (!str) return '';
+      try { return JSON.stringify(JSON.parse(str), null, 2); } catch(e) { return str; }
+    },
+
+    fmtSize(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    },
+
+    parsePort(ports) {
+      const m = (ports || '').match(/[\d.]+:(\d+)->/);
+      return m ? m[1] : '';
+    },
+
+    prefill(c) {
+      const name = (c.Names || c.Name || '').replace(/^\//, '');
+      const port = this.parsePort(c.Ports || '');
+      this.form.container   = name;
+      this.form.subpath     = name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      if (port) this.form.backend_url = `http://localhost:${port}`;
+      document.getElementById('f-subpath')?.focus();
+    },
+
+    onContainerSelect() {
+      const c = this.containers.find(x =>
+        (x.Names || x.Name || '').replace(/^\//, '') === this.form.container
+      );
+      if (c) this.prefill(c);
+    },
+
+    proxyUrl(proxy) {
+      return `${location.protocol}//${location.host}/${proxy.subpath}`;
+    },
+
+    async copyUrl(proxy) {
+      await navigator.clipboard.writeText(this.proxyUrl(proxy));
+      this.notify(`Copied ${this.proxyUrl(proxy)}`);
+    },
+
+    idlePct(proxy) {
+      if (proxy.idle_seconds === null || proxy.idle_seconds === undefined) return 100;
+      return Math.max(0, 100 - (proxy.idle_seconds / proxy.idle_timeout) * 100);
+    },
+
+    idleColor(proxy) {
+      if (!proxy.container_up) return '#27272a';
+      if (proxy.idle_seconds === null || proxy.idle_seconds === undefined) return '#4ade80';
+      const p = this.idlePct(proxy);
+      if (p > 60) return '#4ade80';
+      if (p > 25) return '#fbbf24';
+      return '#f87171';
+    },
+
+    idleTooltip(proxy) {
+      if (!proxy.container_up) return 'Container stopped';
+      if (proxy.idle_seconds === null || proxy.idle_seconds === undefined) return 'No requests yet';
+      return `Idle: ${Math.round(proxy.idle_seconds)}s / ${proxy.idle_timeout}s`;
+    },
+
+    statusLabel(proxy) {
+      if (proxy.active_requests > 0)    return `${proxy.active_requests} active`;
+      if (proxy.container_up === true)  return 'running';
+      if (proxy.container_up === false) return 'stopped';
+      return 'unknown';
+    },
+
+    statusDot(proxy) {
+      if (proxy.active_requests > 0)    return 'dot-blue';
+      if (proxy.container_up === true)  return 'dot-green';
+      if (proxy.container_up === false) return 'dot-gray';
+      return 'dot-amber';
+    },
+
+    statusPillStyle(proxy) {
+      if (proxy.active_requests > 0)
+        return 'background:rgba(96,165,250,0.1);color:#93c5fd;border:1px solid rgba(96,165,250,0.15)';
+      if (proxy.container_up === true)
+        return 'background:rgba(74,222,128,0.08);color:#86efac;border:1px solid rgba(74,222,128,0.15)';
+      if (proxy.container_up === false)
+        return 'background:#18181b;color:#52525b;border:1px solid #27272a';
+      return 'background:rgba(251,191,36,0.08);color:#fde68a;border:1px solid rgba(251,191,36,0.15)';
+    },
+
+    containerDot(c) {
+      const s = (c.State || c.Status || '').toLowerCase();
+      if (s.includes('running'))  return 'dot-green';
+      if (s.includes('paused') || s.includes('restarting')) return 'dot-amber';
+      return 'dot-gray';
+    },
+
+    containerPillStyle(c) {
+      const s = (c.State || c.Status || '').toLowerCase();
+      if (s.includes('running'))
+        return 'background:rgba(74,222,128,0.08);color:#86efac;border:1px solid rgba(74,222,128,0.15)';
+      if (s.includes('paused') || s.includes('restarting'))
+        return 'background:rgba(251,191,36,0.08);color:#fde68a;border:1px solid rgba(251,191,36,0.15)';
+      return 'background:#18181b;color:#52525b;border:1px solid #27272a';
+    },
+
+    async addProxy() {
+      const { subpath, container, backend_url, idle_timeout, auto_unload } = this.form;
+      if (!subpath.trim() || !container.trim() || !backend_url.trim()) {
+        this.notify('Container, subpath, and backend URL are required', true);
+        return;
+      }
+      const r = await fetch('/api/proxies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subpath: subpath.trim(), container: container.trim(),
+          backend_url: backend_url.trim(), idle_timeout, auto_unload,
+        }),
+      });
+      if (!r.ok) { this.notify((await r.json()).detail || 'Error', true); return; }
+      this.form = { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false };
+      this.notify(`/${subpath} proxy added`);
+      this.loadProxies();
+    },
+
+    async removeProxy(subpath) {
+      await fetch(`/api/proxies/${subpath}`, { method: 'DELETE' });
+      const { [subpath]: _, ...rest } = this.open;
+      this.open = rest;
+      this.notify(`/${subpath} removed`);
+      this.loadProxies();
+    },
+
+    async unloadProxy(proxy) {
+      this.notify(proxy.auto_unload ? `Unloading /${proxy.subpath}…` : `Restarting /${proxy.subpath}…`);
+      const r    = await fetch(`/api/proxies/${proxy.subpath}/unload`, { method: 'POST' });
+      const data = await r.json();
+      if (!r.ok) { this.notify(data.detail || 'Failed', true); return; }
+      this.notify(data.auto_unload
+        ? `/${proxy.subpath} unloaded — cold-starts on next request`
+        : `/${proxy.subpath} restarted`);
+      this.loadProxies();
+    },
+
+    async setAutoUnload(proxy, value) {
+      await fetch(`/api/proxies/${proxy.subpath}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auto_unload: value }),
+      });
+      this.notify(`/${proxy.subpath} unload-on-idle ${value ? 'enabled' : 'disabled'}`);
+      this.loadProxies();
+    },
+
+    fmtAge(ts) {
+      const s = Math.round(Date.now() / 1000 - ts);
+      if (s < 60)   return `${s}s ago`;
+      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+      return `${Math.floor(s / 3600)}h ago`;
+    },
+
+    notify(msg, err = false) {
+      clearTimeout(this._toastTimer);
+      this.toast = { visible: true, msg, err };
+      this._toastTimer = setTimeout(() => this.toast.visible = false, 3000);
+    },
+  };
+}
+</script>
+</body>
+</html>

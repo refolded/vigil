@@ -1,0 +1,16 @@
+services:
+  idle-proxy:
+    #image: ghcr.io/raslan/vigil:latest
+    # Or build locally:
+    build: .
+    container_name: idleproxy
+    network_mode: host        # so localhost:<port> reaches host-bound containers
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - proxy-data:/data      # persists proxy configs across restarts
+    environment:
+      STARTUP_TIMEOUT: "120"  # max seconds to wait for a container to become ready
+    restart: unless-stopped
+
+volumes:
+  proxy-data:
