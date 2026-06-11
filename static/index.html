@@ -366,6 +366,9 @@
                               :style="reqOpen[proxy.subpath + '_' + req.ts] ? 'transform:rotate(90deg)' : ''"
                               >▶</span>
                         <span style="color:#52525b;width:52px;flex-shrink:0" x-text="fmtAge(req.ts)"></span>
+                        <span x-show="req.client_ip"
+                              style="color:#3f3f46;font-size:10.5px;flex-shrink:0;font-family:'JetBrains Mono',monospace"
+                              x-text="req.client_ip"></span>
                         <span style="background:#18181b;border:1px solid #27272a;padding:2px 6px;border-radius:4px;color:#a1a1aa;font-size:11px;flex-shrink:0"
                               x-text="req.method"></span>
                         <span style="color:#d4d4d8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="req.path"></span>
@@ -388,12 +391,25 @@
                       <div x-show="reqOpen[proxy.subpath + '_' + req.ts]"
                            style="display:none;padding:6px 0 14px 18px">
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                          <!-- Request body -->
+                          <!-- Request side -->
                           <div>
-                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:6px;font-weight:500">Request</div>
-                            <div x-show="req.req_ct" style="font-size:10.5px;color:#71717a;margin-bottom:6px">
+                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:8px;font-weight:500">Request</div>
+                            <div x-show="req.client_ip" style="font-size:10.5px;color:#71717a;margin-bottom:5px">
+                              <span style="color:#52525b">from: </span><span style="font-family:'JetBrains Mono',monospace" x-text="req.client_ip"></span>
+                            </div>
+                            <div x-show="req.req_ct" style="font-size:10.5px;color:#71717a;margin-bottom:5px">
                               <span style="color:#52525b">content-type: </span><span x-text="req.req_ct"></span>
                             </div>
+                            <!-- Request headers collapsible -->
+                            <details style="margin-bottom:6px" x-show="req.req_headers && Object.keys(req.req_headers).length">
+                              <summary style="font-size:10px;color:#52525b;cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:4px">
+                                <span>▶</span>
+                                <span>headers (<span x-text="Object.keys(req.req_headers||{}).length"></span>)</span>
+                              </summary>
+                              <pre style="margin:4px 0 0;padding:7px 9px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#71717a;font-size:10px;overflow-x:auto;white-space:pre;max-height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
+                                   x-text="fmtHeaders(req.req_headers)"></pre>
+                            </details>
+                            <!-- Request body -->
                             <template x-if="req.req_body">
                               <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.req_body)"></pre>
                             </template>
@@ -401,26 +417,48 @@
                               <div style="color:#52525b;font-size:10.5px;padding:4px 0">(no body)</div>
                             </template>
                           </div>
-                          <!-- Response body -->
+                          <!-- Response side -->
                           <div>
-                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:6px;font-weight:500">Response</div>
+                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:8px;font-weight:500">Response</div>
                             <template x-if="req.pending">
                               <div style="color:#52525b;font-size:10.5px;padding:4px 0;animation:breathe 1.2s ease-in-out infinite">waiting for response…</div>
                             </template>
                             <template x-if="!req.pending">
                               <div>
-                                <div x-show="req.resp_ct" style="font-size:10.5px;color:#71717a;margin-bottom:6px">
+                                <div x-show="req.resp_ct" style="font-size:10.5px;color:#71717a;margin-bottom:5px">
                                   <span style="color:#52525b">content-type: </span><span x-text="req.resp_ct"></span>
                                   <template x-if="req.resp_size > 0">
                                     <span> &middot; <span x-text="fmtSize(req.resp_size)"></span></span>
                                   </template>
                                 </div>
+                                <!-- Response headers collapsible -->
+                                <details style="margin-bottom:6px" x-show="req.resp_headers && Object.keys(req.resp_headers).length">
+                                  <summary style="font-size:10px;color:#52525b;cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:4px">
+                                    <span>▶</span>
+                                    <span>headers (<span x-text="Object.keys(req.resp_headers||{}).length"></span>)</span>
+                                  </summary>
+                                  <pre style="margin:4px 0 0;padding:7px 9px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#71717a;font-size:10px;overflow-x:auto;white-space:pre;max-height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
+                                       x-text="fmtHeaders(req.resp_headers)"></pre>
+                                </details>
+                                <!-- Media preview button -->
+                                <template x-if="req.resp_has_preview">
+                                  <button @click.stop="openPreview(proxy, req)"
+                                          class="btn btn-ghost"
+                                          style="font-size:11px;padding:4px 10px;margin-bottom:6px;gap:5px">
+                                    ▶ Preview
+                                  </button>
+                                </template>
+                                <!-- Text body -->
                                 <template x-if="req.resp_body">
                                   <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.resp_body)"></pre>
                                 </template>
-                                <template x-if="!req.resp_body">
+                                <template x-if="!req.resp_body && !req.resp_has_preview">
                                   <div style="color:#52525b;font-size:10.5px;padding:4px 0"
                                        x-text="req.resp_size > 0 ? `(binary · ${fmtSize(req.resp_size)})` : '(no body)'"></div>
+                                </template>
+                                <template x-if="!req.resp_body && req.resp_is_media && !req.resp_has_preview">
+                                  <div style="color:#52525b;font-size:10.5px;padding:4px 0"
+                                       x-text="`(media too large to preview · ${fmtSize(req.resp_size)})`"></div>
                                 </template>
                               </div>
                             </template>
@@ -490,6 +528,37 @@
   </div>
 </main>
 
+<!-- ═══════════════════════════ MEDIA PREVIEW ══════════════════ -->
+<div x-show="mediaPreview"
+     x-transition:enter="transition ease-out duration-150"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-100"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     style="position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:24px"
+     @click.self="mediaPreview = null"
+     @keydown.escape.window="mediaPreview = null">
+  <div style="background:#111113;border:1px solid #27272a;border-radius:12px;padding:20px;max-width:92vw;max-height:90vh;overflow:auto;position:relative">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b" x-text="mediaPreview?.ct"></span>
+      <div style="flex:1"></div>
+      <button @click="mediaPreview = null"
+              style="background:none;border:none;color:#71717a;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px"
+              onmouseover="this.style.color='#d4d4d8'" onmouseout="this.style.color='#71717a'">✕</button>
+    </div>
+    <template x-if="mediaPreview?.mediaType === 'audio'">
+      <audio controls :src="mediaPreview.url" style="width:min(480px,80vw);display:block"></audio>
+    </template>
+    <template x-if="mediaPreview?.mediaType === 'image'">
+      <img :src="mediaPreview.url" style="max-width:min(800px,80vw);max-height:70vh;object-fit:contain;display:block;border-radius:6px">
+    </template>
+    <template x-if="mediaPreview?.mediaType === 'video'">
+      <video controls :src="mediaPreview.url" style="max-width:min(800px,80vw);max-height:70vh;display:block;border-radius:6px"></video>
+    </template>
+  </div>
+</div>
+
 <!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
 <div x-show="toast.visible"
      x-transition:enter="transition ease-out duration-150"
@@ -521,6 +590,7 @@ function app() {
     reqOpen:         {},
     containerSearch: '',
     _tick:           0,
+    mediaPreview:    null,
     form: { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false },
     toast: { visible: false, msg: '', err: false },
     _toastTimer: null,
@@ -740,6 +810,20 @@ function app() {
       });
       this.notify(`/${proxy.subpath} unload-on-idle ${value ? 'enabled' : 'disabled'}`);
       this.loadProxies();
+    },
+
+    fmtHeaders(hdrs) {
+      if (!hdrs) return '';
+      return Object.entries(hdrs).map(([k, v]) => `${k}: ${v}`).join('\n');
+    },
+
+    openPreview(proxy, req) {
+      const ct = req.resp_ct || '';
+      const mediaType = ct.startsWith('audio/') ? 'audio'
+                      : ct.startsWith('image/') ? 'image'
+                      : ct.startsWith('video/') ? 'video' : 'audio';
+      const url = `/api/proxies/${proxy.subpath}/requests/${req.id}/preview`;
+      this.mediaPreview = { ct, mediaType, url };
     },
 
     fmtElapsed(ts) {

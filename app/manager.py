@@ -34,6 +34,7 @@ class ProxyConfig:
         self.request_log: collections.deque = collections.deque(maxlen=10)
         self._lock = threading.Lock()
         self._req_counter: int = 0
+        self._preview_cache: dict = {}  # req_id → bytes, excluded from status JSON
 
     def to_dict(self) -> dict:
         return {
@@ -57,8 +58,10 @@ class ProxyConfig:
         self,
         method: str,
         path: str,
+        client_ip: str = "",
         req_content_type: str = "",
         req_body: Optional[str] = None,
+        req_headers: Optional[dict] = None,
     ) -> int:
         req_id = self._req_counter
         self._req_counter += 1
@@ -67,15 +70,23 @@ class ProxyConfig:
             "method": method,
             "path": path,
             "ts": time.time(),
+            "client_ip": client_ip,
             "pending": True,
             "req_ct": req_content_type,
+            "req_headers": req_headers or {},
             "req_body": req_body,
             "status": None,
             "duration_ms": None,
             "resp_ct": "",
+            "resp_headers": {},
             "resp_body": None,
             "resp_size": 0,
+            "resp_is_media": False,
+            "resp_has_preview": False,
         })
+        # Prune preview cache for entries evicted from the deque
+        active_ids = {e.get("id") for e in self.request_log}
+        self._preview_cache = {k: v for k, v in self._preview_cache.items() if k in active_ids}
         return req_id
 
     def log_request_end(
@@ -86,6 +97,9 @@ class ProxyConfig:
         resp_content_type: str = "",
         resp_body: Optional[str] = None,
         resp_size: int = 0,
+        resp_is_media: bool = False,
+        resp_headers: Optional[dict] = None,
+        resp_preview: Optional[bytes] = None,
     ):
         for entry in self.request_log:
             if entry.get("id") == req_id:
@@ -94,10 +108,15 @@ class ProxyConfig:
                     "status": status,
                     "duration_ms": duration_ms,
                     "resp_ct": resp_content_type,
+                    "resp_headers": resp_headers or {},
                     "resp_body": resp_body,
                     "resp_size": resp_size,
+                    "resp_is_media": resp_is_media,
+                    "resp_has_preview": bool(resp_preview),
                 })
                 break
+        if resp_preview is not None:
+            self._preview_cache[req_id] = resp_preview
 
     @classmethod
     def from_dict(cls, d: dict) -> "ProxyConfig":

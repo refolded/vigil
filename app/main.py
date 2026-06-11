@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from typing import Optional, Set
 
+
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -84,12 +85,18 @@ HOP_BY_HOP = frozenset([
 
 RESERVED = {"api"}
 
-MAX_BODY_CAPTURE = 8 * 1024  # 8 KB per request log entry
+MAX_BODY_CAPTURE = 8 * 1024       # 8 KB for text responses
+MAX_MEDIA_CAPTURE = 4 * 1024 * 1024  # 4 MB for audio/image/video preview
 
 
 def _is_text_ct(ct: str) -> bool:
     ct = ct.lower()
     return any(t in ct for t in ("json", "text/", "xml", "html", "yaml"))
+
+
+def _is_media_ct(ct: str) -> bool:
+    ct = ct.lower()
+    return ct.startswith(("audio/", "image/", "video/"))
 
 # ---------------------------------------------------------------------------
 # UI
@@ -184,6 +191,21 @@ async def unload_proxy(subpath: str):
     asyncio.create_task(_broadcast())
     return {"ok": True, "auto_unload": cfg.auto_unload}
 
+@app.get("/api/proxies/{subpath}/requests/{req_id}/preview", include_in_schema=False)
+async def preview_response(subpath: str, req_id: int):
+    cfg = manager.get(subpath)
+    if cfg is None:
+        raise HTTPException(404)
+    data = cfg._preview_cache.get(req_id)
+    if data is None:
+        raise HTTPException(404, "Preview not cached")
+    ct = "application/octet-stream"
+    for entry in cfg.request_log:
+        if entry.get("id") == req_id:
+            ct = entry.get("resp_ct", ct)
+            break
+    return Response(content=data, media_type=ct)
+
 # ---------------------------------------------------------------------------
 # Proxy catch-all (must be registered last)
 # ---------------------------------------------------------------------------
@@ -234,7 +256,16 @@ async def proxy(request: Request, full_path: str):
         if len(body) > MAX_BODY_CAPTURE:
             req_body_str += f"\n\n[…{len(body) - MAX_BODY_CAPTURE} bytes truncated]"
 
-    req_id = cfg.log_request_start(request.method, log_path, req_ct, req_body_str)
+    client_ip = request.client.host if request.client else ""
+    req_headers = dict(request.headers)
+
+    req_id = cfg.log_request_start(
+        request.method, log_path,
+        client_ip=client_ip,
+        req_content_type=req_ct,
+        req_body=req_body_str,
+        req_headers=req_headers,
+    )
     asyncio.create_task(_broadcast())
 
     client = httpx.AsyncClient(timeout=None)
@@ -254,20 +285,24 @@ async def proxy(request: Request, full_path: str):
         asyncio.create_task(_broadcast())
         raise HTTPException(502, str(exc))
 
-    resp_headers = {
+    fwd_resp_headers = {
         k: v for k, v in upstream_resp.headers.items()
         if k.lower() not in HOP_BY_HOP
     }
+    all_resp_headers = dict(upstream_resp.headers)
 
     status_code = upstream_resp.status_code
+    resp_ct = upstream_resp.headers.get("content-type", "")
+    is_media = _is_media_ct(resp_ct)
+    capture_limit = MAX_MEDIA_CAPTURE if is_media else MAX_BODY_CAPTURE
     resp_capture: dict = {"chunks": [], "total": 0}
 
     async def _stream():
         try:
             async for chunk in upstream_resp.aiter_bytes():
                 yield chunk
-                if resp_capture["total"] < MAX_BODY_CAPTURE:
-                    take = min(len(chunk), MAX_BODY_CAPTURE - resp_capture["total"])
+                if resp_capture["total"] < capture_limit:
+                    take = min(len(chunk), capture_limit - resp_capture["total"])
                     resp_capture["chunks"].append(chunk[:take])
                 resp_capture["total"] += len(chunk)
                 cfg.last_activity = time.time()
@@ -275,9 +310,11 @@ async def proxy(request: Request, full_path: str):
             pass  # upstream closed connection after sending all data
         finally:
             cfg.active_requests -= 1
-            resp_ct = upstream_resp.headers.get("content-type", "")
             resp_body_str: Optional[str] = None
-            if _is_text_ct(resp_ct) and resp_capture["chunks"]:
+            resp_preview: Optional[bytes] = None
+            if is_media and resp_capture["chunks"]:
+                resp_preview = b"".join(resp_capture["chunks"])
+            elif _is_text_ct(resp_ct) and resp_capture["chunks"]:
                 captured = b"".join(resp_capture["chunks"]).decode("utf-8", errors="replace")
                 if resp_capture["total"] > MAX_BODY_CAPTURE:
                     captured += f"\n\n[…{resp_capture['total'] - MAX_BODY_CAPTURE} bytes truncated]"
@@ -288,6 +325,9 @@ async def proxy(request: Request, full_path: str):
                 resp_content_type=resp_ct,
                 resp_body=resp_body_str,
                 resp_size=resp_capture["total"],
+                resp_is_media=is_media,
+                resp_headers=all_resp_headers,
+                resp_preview=resp_preview,
             )
             asyncio.create_task(_broadcast())
             await upstream_resp.aclose()
@@ -296,6 +336,6 @@ async def proxy(request: Request, full_path: str):
     return StreamingResponse(
         _stream(),
         status_code=upstream_resp.status_code,
-        headers=resp_headers,
-        media_type=upstream_resp.headers.get("content-type"),
+        headers=fwd_resp_headers,
+        media_type=resp_ct,
     )
