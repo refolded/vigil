@@ -1,6 +1,6 @@
 services:
   idle-proxy:
-    #image: ghcr.io/raslan/vigil:latest
+    #image: ghcr.io/refolded/vigil:latest
     # Or build locally:
     build: .
     container_name: idleproxy

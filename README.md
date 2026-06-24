@@ -19,7 +19,7 @@ docker run -d \
   --network host \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v vigil-data:/data \
-  ghcr.io/raslan/vigil:latest
+  ghcr.io/refolded/vigil:latest
 ```
 
 Open **http://localhost:8474** for the web UI.
