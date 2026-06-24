@@ -145,11 +145,10 @@
     .hero-wrap {
       position: relative;
       overflow: hidden;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      padding-bottom: 5rem;
     }
 
     .hero-grid {
@@ -179,7 +178,7 @@
       position: relative;
       z-index: 1;
       text-align: center;
-      padding: 6rem 1.5rem 4rem;
+      padding: 7rem 1.5rem 3rem;
       max-width: 820px;
       width: 100%;
     }
@@ -335,13 +334,13 @@
       border-color: #404040;
     }
 
-    .hero-scroll {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      color: var(--muted2);
-      animation: fade-up 0.6s 0.8s ease both;
+    .hero-screenshot {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 980px;
+      padding: 0 1.5rem;
+      animation: fade-up 0.6s 0.55s ease both;
     }
 
     /* ─── Problem section ─── */
@@ -380,16 +379,6 @@
     .problem strong { color: var(--text); font-weight: 600; }
 
     /* ─── Screenshot ─── */
-    .screenshot-section {
-      padding: 5rem 1.5rem;
-    }
-
-    .screenshot-wrap {
-      max-width: 940px;
-      margin: 0 auto;
-      animation: float 6s ease-in-out infinite;
-    }
-
     .screenshot-frame {
       border: 1px solid var(--border2);
       border-radius: 12px;
@@ -837,10 +826,16 @@
     </div>
   </div>
 
-  <div class="hero-scroll">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-      <path d="M12 5v14M5 12l7 7 7-7"/>
-    </svg>
+  <div class="hero-screenshot">
+    <div class="screenshot-frame">
+      <div class="screenshot-bar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <div class="url-pill">http://localhost:8474</div>
+      </div>
+      <img src="screenshot.png" alt="Vigil web interface — container list and active proxies" loading="lazy" />
+    </div>
   </div>
 </div>
 
@@ -857,21 +852,6 @@
       The standard answer is to manually <code>docker stop</code> containers when you're done.
       Nobody actually does this. Vigil does it for you.
     </p>
-  </div>
-</div>
-
-<!-- ── Screenshot ── -->
-<div class="screenshot-section reveal">
-  <div class="screenshot-wrap">
-    <div class="screenshot-frame">
-      <div class="screenshot-bar">
-        <span class="dot dot-r"></span>
-        <span class="dot dot-y"></span>
-        <span class="dot dot-g"></span>
-        <div class="url-pill">http://localhost:8474</div>
-      </div>
-      <img src="screenshot.png" alt="Vigil web interface — container list and active proxies" loading="lazy" />
-    </div>
   </div>
 </div>
 
