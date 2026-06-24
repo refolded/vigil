@@ -22,7 +22,7 @@
 <script src="/static/vendor/tailwind.js"></script>
 <script defer src="/static/vendor/alpine.min.js"></script>
 <style>
-  html { zoom: 1.25; }
+  html { font-size: 15px; }
   * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
   [x-cloak] { display: none !important; }
 
@@ -55,7 +55,7 @@
   /* ── Table ── */
   .tbl-head th {
     padding: 8px 16px;
-    font-size: 10.5px;
+    font-size: 0.7rem;
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -75,36 +75,27 @@
     border-radius: 6px;
     padding: 7px 10px;
     color: #e4e4e7;
-    font-size: 12.5px;
+    font-size: 0.83rem;
     width: 100%;
     transition: border-color 0.15s, box-shadow 0.15s;
     font-family: inherit;
   }
   .field::placeholder { color: #3f3f46; }
   .field:focus { outline: none; border-color: #3f3f46; box-shadow: 0 0 0 2px rgba(255,255,255,0.04); }
-  .field-mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 11.5px; }
+  .field-mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 0.77rem; }
 
   /* ── Buttons ── */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
-    padding: 5px 11px; border-radius: 6px; font-size: 12px;
+    padding: 5px 11px; border-radius: 6px; font-size: 0.8rem;
     font-weight: 500; cursor: pointer; transition: all 0.12s; border: 1px solid transparent;
     white-space: nowrap;
   }
-  .btn-primary {
-    background: #e4e4e7; color: #09090b;
-    border-color: #e4e4e7;
-  }
+  .btn-primary { background: #e4e4e7; color: #09090b; border-color: #e4e4e7; }
   .btn-primary:hover { background: #fff; border-color: #fff; }
-  .btn-ghost {
-    background: transparent; color: #a1a1aa;
-    border-color: #27272a;
-  }
+  .btn-ghost { background: transparent; color: #a1a1aa; border-color: #27272a; }
   .btn-ghost:hover { background: #18181b; color: #e4e4e7; border-color: #3f3f46; }
-  .btn-danger {
-    background: transparent; color: #f87171;
-    border-color: #3f1f1f;
-  }
+  .btn-danger { background: transparent; color: #f87171; border-color: #3f1f1f; }
   .btn-danger:hover { background: #2a1515; border-color: #7f2020; }
 
   /* ── Toggle ── */
@@ -141,7 +132,8 @@
   .idle-bar-fill { height: 100%; border-radius: 2px; transition: width 1s linear, background 0.8s; }
 
   /* ── Accordion row ── */
-  .proxy-row { transition: background 0.1s; cursor: pointer; }
+  .proxy-row { display:flex; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid #18181b; transition: background 0.1s; cursor: pointer; }
+  .proxy-row-disabled { opacity: 0.45; }
   .proxy-row:hover { background: rgba(255,255,255,0.02); }
   .proxy-accordion { background: #0a0a0b; border-top: 1px solid #1a1a1e; }
 
@@ -149,17 +141,30 @@
   .pill {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 2px 8px; border-radius: 20px;
-    font-size: 11px; font-weight: 500;
+    font-size: 0.73rem; font-weight: 500;
   }
 
   /* ── Section label ── */
   .section-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    font-size: 0.67rem; font-weight: 600; letter-spacing: 0.1em;
     text-transform: uppercase; color: #52525b;
   }
 
   /* ── Divider ── */
   .divider { border: none; border-top: 1px solid #1a1a1e; margin: 0; }
+
+  /* ── Responsive ── */
+  #main-grid { grid-template-columns: 1fr 1fr; }
+
+  @media (max-width: 1024px) {
+    #main-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .proxy-row-container { display: none !important; }
+    .proxy-row-idlebar   { display: none !important; }
+    .proxy-row-unload    { display: none !important; }
+    main { padding: 12px !important; }
+  }
 </style>
 </head>
 
@@ -168,15 +173,14 @@
 <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
 <header style="background:#0a0a0b;border-bottom:1px solid #1a1a1e;position:sticky;top:0;z-index:20">
   <div style="max-width:1360px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center;gap:12px">
-    <!-- Eye / vigil icon -->
     <svg width="22" height="16" viewBox="0 0 22 16" fill="none" style="flex-shrink:0">
       <path d="M1 8C3.5 3 7 1 11 1s7.5 2 10 7c-2.5 5-6 7-10 7S3.5 13 1 8z"
             stroke="#71717a" stroke-width="1.5" stroke-linejoin="round"/>
       <circle cx="11" cy="8" r="3" stroke="#a1a1aa" stroke-width="1.5"/>
       <circle cx="11" cy="8" r="1" fill="#a1a1aa"/>
     </svg>
-    <span style="font-size:14px;font-weight:600;color:#f4f4f5;letter-spacing:-0.02em">Vigil</span>
-    <span style="color:#3f3f46;font-size:12px" class="hidden sm:block">watch. sleep. wake.</span>
+    <span style="font-size:0.93rem;font-weight:600;color:#f4f4f5;letter-spacing:-0.02em">Vigil</span>
+    <span style="color:#3f3f46;font-size:0.8rem" class="hidden sm:block">watch. sleep. wake.</span>
     <div style="flex:1"></div>
     <button @click="refresh()" class="btn btn-ghost" style="gap:6px">
       <span>↻</span> Refresh
@@ -186,20 +190,20 @@
 
 <!-- ═══════════════════════════ MAIN ════════════════════════════ -->
 <main style="max-width:1360px;margin:0 auto;padding:24px">
-  <div class="grid gap-5 items-start" style="grid-template-columns:1fr 1fr" id="main-grid">
+  <div class="grid gap-5 items-start" id="main-grid">
 
     <!-- ──────────── Containers ──────────── -->
     <div class="card">
       <div class="card-header">
         <span class="section-label">Containers</span>
-        <span style="font-size:11px;color:#52525b;background:#18181b;border:1px solid #27272a;padding:1px 7px;border-radius:10px" x-text="containers.length"></span>
+        <span style="font-size:0.73rem;color:#52525b;background:#18181b;border:1px solid #27272a;padding:1px 7px;border-radius:10px" x-text="containers.length"></span>
         <div style="flex:1"></div>
-        <button @click="loadContainers()" class="btn btn-ghost" style="gap:5px;font-size:12px;padding:3px 9px" title="Reload container list">
-          <span style="font-size:13px;line-height:1">↻</span> Reload
+        <button @click="loadContainers()" class="btn btn-ghost" style="gap:5px;font-size:0.8rem;padding:3px 9px" title="Reload container list">
+          <span style="font-size:0.87rem;line-height:1">↻</span> Reload
         </button>
       </div>
       <div style="padding:8px 12px;border-bottom:1px solid #1a1a1e">
-        <input x-model="containerSearch" type="text" placeholder="Filter by name or image…" spellcheck="false" class="field" style="font-size:12px;padding:5px 9px">
+        <input x-model="containerSearch" type="text" placeholder="Filter by name or image…" spellcheck="false" class="field" style="font-size:0.8rem;padding:5px 9px">
       </div>
 
       <table style="width:100%;border-collapse:collapse">
@@ -213,26 +217,25 @@
         </thead>
         <tbody>
           <template x-if="!filteredContainers.length">
-            <tr><td colspan="4" style="padding:32px;text-align:center;color:#71717a;font-size:12px" x-text="containerSearch ? 'No containers match filter' : 'No containers found'"></td></tr>
+            <tr><td colspan="4" style="padding:32px;text-align:center;color:#71717a;font-size:0.8rem" x-text="containerSearch ? 'No containers match filter' : 'No containers found'"></td></tr>
           </template>
           <template x-for="c in filteredContainers" :key="c.ID || c.Names">
             <tr class="tbl-row">
               <td>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e4e4e7;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:#e4e4e7;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
                      x-text="(c.Names||c.Name||'').replace(/^\//,'')"></div>
-                <div style="font-size:11px;color:#52525b;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px" x-text="c.Image||''"></div>
+                <div style="font-size:0.73rem;color:#52525b;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px" x-text="c.Image||''"></div>
               </td>
               <td>
-                <span class="pill"
-                      :style="containerPillStyle(c)">
+                <span class="pill" :style="containerPillStyle(c)">
                   <span class="dot" :class="containerDot(c)"></span>
                   <span x-text="(c.State||c.Status||'').toLowerCase().split(' ')[0]"></span>
                 </span>
               </td>
-              <td style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#71717a"
+              <td style="font-family:'JetBrains Mono',monospace;font-size:0.77rem;color:#71717a"
                   x-text="parsePort(c.Ports||'')||'—'"></td>
               <td style="text-align:right">
-                <button @click="prefill(c)" class="btn btn-ghost" style="font-size:11.5px;padding:4px 10px">
+                <button @click="prefill(c)" class="btn btn-ghost" style="font-size:0.77rem;padding:4px 10px">
                   Proxy →
                 </button>
               </td>
@@ -242,27 +245,28 @@
       </table>
     </div>
 
-    <!-- ──────────── Proxies ──────────── -->
+    <!-- ──────────── Proxies + Add Form ──────────── -->
+    <div style="display:flex;flex-direction:column;gap:20px">
     <div class="card">
       <div class="card-header">
         <span class="section-label">Active Proxies</span>
-        <span style="font-size:11px;color:#52525b;background:#18181b;border:1px solid #27272a;padding:1px 7px;border-radius:10px" x-text="proxies.length"></span>
+        <span style="font-size:0.73rem;color:#52525b;background:#18181b;border:1px solid #27272a;padding:1px 7px;border-radius:10px" x-text="proxies.length"></span>
         <div style="flex:1"></div>
-        <button @click="loadProxies()" class="btn btn-ghost" style="gap:5px;font-size:12px;padding:3px 9px" title="Reload proxy status">
-          <span style="font-size:13px;line-height:1">↻</span> Reload
+        <button @click="loadProxies()" class="btn btn-ghost" style="gap:5px;font-size:0.8rem;padding:3px 9px" title="Reload proxy status">
+          <span style="font-size:0.87rem;line-height:1">↻</span> Reload
         </button>
       </div>
 
       <!-- Proxy list -->
       <div>
         <template x-if="!proxies.length">
-          <div style="padding:40px 16px;text-align:center;color:#71717a;font-size:12px">No proxies configured — add one below</div>
+          <div style="padding:40px 16px;text-align:center;color:#71717a;font-size:0.8rem">No proxies configured — add one below</div>
         </template>
 
         <template x-for="proxy in proxies" :key="proxy.subpath">
           <div>
             <!-- Proxy header row -->
-            <div class="proxy-row" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid #18181b"
+            <div class="proxy-row" :class="proxy.enabled ? '' : 'proxy-row-disabled'"
                  @click="toggle(proxy.subpath)">
 
               <!-- Arrow -->
@@ -274,14 +278,14 @@
               <!-- Subpath — click to copy -->
               <button @click.stop="copyUrl(proxy)"
                       title="Click to copy proxy URL"
-                      style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:#e4e4e7;background:none;border:none;cursor:pointer;padding:0;transition:color 0.12s"
-                      onmouseover="this.style.color='#a1a1aa'"
-                      onmouseout="this.style.color='#e4e4e7'">
+                      style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:500;color:#e4e4e7;background:none;border:none;cursor:pointer;padding:0"
+                      class="btn-copy-url">
                 /<span x-text="proxy.subpath"></span>
               </button>
 
               <!-- Container -->
-              <span style="font-size:11.5px;color:#71717a;font-family:'JetBrains Mono',monospace;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              <span class="proxy-row-container"
+                    style="font-size:0.77rem;color:#71717a;font-family:'JetBrains Mono',monospace;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
                     x-text="proxy.container"></span>
 
               <div style="flex:1"></div>
@@ -293,20 +297,27 @@
               </span>
 
               <!-- Idle bar -->
-              <div class="idle-bar-track" :title="idleTooltip(proxy)">
+              <div class="proxy-row-idlebar idle-bar-track" :title="idleTooltip(proxy)">
                 <div class="idle-bar-fill"
                      :style="`width:${idlePct(proxy)}%;background:${idleColor(proxy)}`"></div>
               </div>
 
               <!-- Action buttons -->
               <button @click.stop="unloadProxy(proxy)"
-                      class="btn btn-ghost"
-                      style="font-size:11.5px;padding:4px 9px;font-family:'JetBrains Mono',monospace"
+                      class="btn btn-ghost proxy-row-unload"
+                      style="font-size:0.77rem;padding:4px 8px"
                       :title="proxy.auto_unload ? 'Stop container — frees VRAM, cold-starts on next request' : 'Restart container — model reloads, VRAM stays'"
-                      x-text="proxy.auto_unload ? '⏹ Unload' : '↺ Restart'">
+                      x-text="proxy.auto_unload ? '⏹' : '↺'">
               </button>
-              <button @click.stop="removeProxy(proxy.subpath)" class="btn btn-danger" style="font-size:11.5px;padding:4px 9px">
-                Remove
+              <div @click.stop="setEnabled(proxy, !proxy.enabled)"
+                   class="toggle-track"
+                   :class="proxy.enabled ? 'on' : ''"
+                   :title="proxy.enabled ? 'Click to disable' : 'Click to enable'"
+                   style="cursor:pointer;flex-shrink:0">
+                <div class="toggle-thumb"></div>
+              </div>
+              <button @click.stop="removeProxy(proxy.subpath)" class="btn btn-danger" style="font-size:0.77rem;padding:4px 8px" title="Remove proxy">
+                ✕
               </button>
             </div>
 
@@ -317,69 +328,139 @@
                  x-transition:enter-end="opacity-100"
                  style="padding:16px 20px">
 
-              <!-- Settings row -->
-              <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e">
-                <span class="section-label">Settings</span>
+              <!-- Settings -->
+              <div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e">
+                <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px">
+                  <span class="section-label">Settings</span>
 
-                <!-- Idle timeout -->
-                <div style="display:flex;align-items:center;gap:7px">
-                  <label style="font-size:11px;color:#71717a;white-space:nowrap">Idle timeout</label>
-                  <input type="number" min="10"
-                         :value="proxy.idle_timeout"
-                         @change="setIdleTimeout(proxy, $event.target.value)"
-                         @keydown.enter="$event.target.blur()"
-                         class="field field-mono"
-                         style="width:72px;padding:4px 7px;font-size:12px">
-                  <span style="font-size:11px;color:#52525b">s</span>
+                  <!-- Idle timeout -->
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <label style="font-size:0.73rem;color:#71717a;white-space:nowrap">Idle timeout</label>
+                    <input type="number" min="10"
+                           :value="proxy.idle_timeout"
+                           @change="setIdleTimeout(proxy, $event.target.value)"
+                           @keydown.enter="$event.target.blur()"
+                           class="field field-mono"
+                           style="width:72px;padding:4px 7px;font-size:0.8rem">
+                    <span style="font-size:0.73rem;color:#52525b">s</span>
+                  </div>
+
+                  <!-- Max concurrency -->
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <label style="font-size:0.73rem;color:#71717a;white-space:nowrap">Max concurrency</label>
+                    <input type="number" min="0"
+                           :value="proxy.max_concurrency"
+                           @change="setMaxConcurrency(proxy, $event.target.value)"
+                           @keydown.enter="$event.target.blur()"
+                           class="field field-mono"
+                           style="width:56px;padding:4px 7px;font-size:0.8rem">
+                    <span style="font-size:0.73rem;color:#52525b" x-text="proxy.max_concurrency === 0 ? '(unlimited)' : 'slot'"></span>
+                  </div>
+
+                  <!-- Health path -->
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <label style="font-size:0.73rem;color:#71717a;white-space:nowrap">Health path</label>
+                    <input type="text"
+                           :value="proxy.health_path"
+                           @change="setHealthPath(proxy, $event.target.value)"
+                           @keydown.enter="$event.target.blur()"
+                           class="field field-mono"
+                           style="width:120px;padding:4px 7px;font-size:0.8rem"
+                           placeholder="/">
+                  </div>
                 </div>
 
-                <!-- Auto-unload toggle -->
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer"
-                       @click.prevent="setAutoUnload(proxy, !proxy.auto_unload)">
-                  <div class="toggle-track" :class="proxy.auto_unload ? 'on' : ''">
-                    <div class="toggle-thumb"></div>
-                  </div>
-                  <span style="font-size:12px;color:#a1a1aa;user-select:none">Unload on idle</span>
-                </label>
-                <span style="font-size:11.5px;color:#52525b"
-                      x-text="proxy.auto_unload
-                        ? 'Stop on idle → cold-start on next request (frees VRAM)'
-                        : 'Restart on idle → model reloads, VRAM stays'">
+                <!-- Toggles row -->
+                <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+                  <!-- Enable/disable -->
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer"
+                         @click.prevent="setEnabled(proxy, !proxy.enabled)">
+                    <div class="toggle-track" :class="proxy.enabled ? 'on' : ''">
+                      <div class="toggle-thumb"></div>
+                    </div>
+                    <span style="font-size:0.8rem;color:#a1a1aa;user-select:none">Enabled</span>
+                  </label>
+
+                  <!-- Auto-unload -->
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer"
+                         @click.prevent="setAutoUnload(proxy, !proxy.auto_unload)">
+                    <div class="toggle-track" :class="proxy.auto_unload ? 'on' : ''">
+                      <div class="toggle-thumb"></div>
+                    </div>
+                    <span style="font-size:0.8rem;color:#a1a1aa;user-select:none">Unload on idle</span>
+                  </label>
+                  <span style="font-size:0.77rem;color:#52525b"
+                        x-text="proxy.auto_unload
+                          ? 'Stop on idle → cold-start on next request (frees VRAM)'
+                          : 'Restart on idle → model reloads, VRAM stays'">
+                  </span>
+                </div>
+              </div>
+
+              <!-- TTS split settings -->
+              <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e">
+                <span class="section-label">TTS split</span>
+
+                <div style="display:flex;align-items:center;gap:7px">
+                  <label style="font-size:0.73rem;color:#71717a;white-space:nowrap">Split mode</label>
+                  <select :value="proxy.tts_split_mode"
+                          @change="setTtsSplitMode(proxy, $event.target.value)"
+                          class="field field-mono"
+                          style="padding:4px 7px;font-size:0.8rem">
+                    <option value="none">Off</option>
+                    <option value="sentence">Sentence</option>
+                    <option value="paragraph">Paragraph</option>
+                  </select>
+                </div>
+
+                <span x-show="proxy.tts_split_mode !== 'none'" style="font-size:0.77rem;color:#52525b">
+                  Splits large input by <span x-text="proxy.tts_split_mode"></span>, generates chunks in parallel, returns combined WAV. Set OpenWebUI TTS split to <em>None</em>.
                 </span>
+              </div>
+
+              <!-- Manual actions -->
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1a1a1e;flex-wrap:wrap">
+                <span class="section-label" style="margin-right:4px">Actions</span>
+                <button @click="stopProxy(proxy)" class="btn btn-ghost" style="font-size:0.77rem;padding:4px 10px;gap:5px"
+                        title="Stop container — frees VRAM, next request cold-starts it">
+                  ⏹ Stop
+                </button>
+                <button @click="restartProxy(proxy)" class="btn btn-ghost" style="font-size:0.77rem;padding:4px 10px;gap:5px"
+                        title="Restart container — model reloads from disk">
+                  ↺ Restart
+                </button>
               </div>
 
               <!-- Request log -->
               <div class="section-label" style="margin-bottom:10px">Recent requests</div>
 
               <template x-if="!proxy.request_log || !proxy.request_log.length">
-                <div style="font-size:12px;color:#71717a;padding:8px 0">No requests yet</div>
+                <div style="font-size:0.8rem;color:#71717a;padding:8px 0">No requests yet</div>
               </template>
 
               <template x-if="proxy.request_log && proxy.request_log.length">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.77rem">
                   <template x-for="(req, i) in [...proxy.request_log].reverse()" :key="i">
                     <div>
                       <!-- Clickable summary row -->
                       <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #18181b;cursor:pointer;user-select:none"
                            @click="toggleReq(proxy.subpath + '_' + req.ts)">
-                        <span style="color:#3f3f46;width:10px;flex-shrink:0;font-size:9px;transition:transform .15s"
+                        <span style="color:#3f3f46;width:10px;flex-shrink:0;font-size:0.6rem;transition:transform .15s"
                               :style="reqOpen[proxy.subpath + '_' + req.ts] ? 'transform:rotate(90deg)' : ''"
                               >▶</span>
                         <span style="color:#52525b;width:52px;flex-shrink:0" x-text="fmtAge(req.ts)"></span>
                         <span x-show="req.client_ip"
-                              style="color:#3f3f46;font-size:10.5px;flex-shrink:0;font-family:'JetBrains Mono',monospace"
+                              style="color:#3f3f46;font-size:0.7rem;flex-shrink:0;font-family:'JetBrains Mono',monospace"
                               x-text="req.client_ip"></span>
-                        <span style="background:#18181b;border:1px solid #27272a;padding:2px 6px;border-radius:4px;color:#a1a1aa;font-size:11px;flex-shrink:0"
+                        <span style="background:#18181b;border:1px solid #27272a;padding:2px 6px;border-radius:4px;color:#a1a1aa;font-size:0.73rem;flex-shrink:0"
                               x-text="req.method"></span>
                         <span style="color:#d4d4d8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="req.path"></span>
-                        <!-- Status: pulsing dots while pending, code when done -->
                         <span x-show="req.pending"
                               style="flex-shrink:0;min-width:32px;text-align:right;color:#52525b;animation:breathe 1.2s ease-in-out infinite">···</span>
                         <span x-show="!req.pending"
                               style="flex-shrink:0;font-weight:500;min-width:32px;text-align:right"
                               :style="req.status<300?'color:#4ade80':req.status<400?'color:#fbbf24':'color:#f87171'"
                               x-text="req.status"></span>
-                        <!-- Duration: live elapsed while pending, final ms when done -->
                         <span x-show="req.pending"
                               style="color:#52525b;min-width:56px;text-align:right;flex-shrink:0"
                               x-text="fmtElapsed(req.ts)"></span>
@@ -393,71 +474,66 @@
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                           <!-- Request side -->
                           <div>
-                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:8px;font-weight:500">Request</div>
-                            <div x-show="req.client_ip" style="font-size:10.5px;color:#71717a;margin-bottom:5px">
+                            <div style="font-size:0.67rem;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:8px;font-weight:500">Request</div>
+                            <div x-show="req.client_ip" style="font-size:0.7rem;color:#71717a;margin-bottom:5px">
                               <span style="color:#52525b">from: </span><span style="font-family:'JetBrains Mono',monospace" x-text="req.client_ip"></span>
                             </div>
-                            <div x-show="req.req_ct" style="font-size:10.5px;color:#71717a;margin-bottom:5px">
+                            <div x-show="req.req_ct" style="font-size:0.7rem;color:#71717a;margin-bottom:5px">
                               <span style="color:#52525b">content-type: </span><span x-text="req.req_ct"></span>
                             </div>
-                            <!-- Request headers collapsible -->
                             <details style="margin-bottom:6px" x-show="req.req_headers && Object.keys(req.req_headers).length">
-                              <summary style="font-size:10px;color:#52525b;cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:4px">
+                              <summary style="font-size:0.67rem;color:#52525b;cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:4px">
                                 <span>▶</span>
                                 <span>headers (<span x-text="Object.keys(req.req_headers||{}).length"></span>)</span>
                               </summary>
-                              <pre style="margin:4px 0 0;padding:7px 9px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#71717a;font-size:10px;overflow-x:auto;white-space:pre;max-height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
+                              <pre style="margin:4px 0 0;padding:7px 9px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#71717a;font-size:0.67rem;overflow-x:auto;white-space:pre;max-height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
                                    x-text="fmtHeaders(req.req_headers)"></pre>
                             </details>
-                            <!-- Request body -->
                             <template x-if="req.req_body">
-                              <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.req_body)"></pre>
+                              <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:0.7rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.req_body)"></pre>
                             </template>
                             <template x-if="!req.req_body">
-                              <div style="color:#52525b;font-size:10.5px;padding:4px 0">(no body)</div>
+                              <div style="color:#52525b;font-size:0.7rem;padding:4px 0">(no body)</div>
                             </template>
                           </div>
                           <!-- Response side -->
                           <div>
-                            <div style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:8px;font-weight:500">Response</div>
+                            <div style="font-size:0.67rem;letter-spacing:0.07em;text-transform:uppercase;color:#52525b;margin-bottom:8px;font-weight:500">Response</div>
                             <template x-if="req.pending">
-                              <div style="color:#52525b;font-size:10.5px;padding:4px 0;animation:breathe 1.2s ease-in-out infinite">waiting for response…</div>
+                              <div style="color:#52525b;font-size:0.7rem;padding:4px 0;animation:breathe 1.2s ease-in-out infinite">waiting for response…</div>
                             </template>
                             <template x-if="!req.pending">
                               <div>
-                                <div x-show="req.resp_ct" style="font-size:10.5px;color:#71717a;margin-bottom:5px">
+                                <div x-show="req.resp_ct" style="font-size:0.7rem;color:#71717a;margin-bottom:5px">
                                   <span style="color:#52525b">content-type: </span><span x-text="req.resp_ct"></span>
                                   <template x-if="req.resp_size > 0">
                                     <span> &middot; <span x-text="fmtSize(req.resp_size)"></span></span>
                                   </template>
                                 </div>
-                                <!-- Response headers collapsible -->
                                 <details style="margin-bottom:6px" x-show="req.resp_headers && Object.keys(req.resp_headers).length">
-                                  <summary style="font-size:10px;color:#52525b;cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:4px">
+                                  <summary style="font-size:0.67rem;color:#52525b;cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:4px">
                                     <span>▶</span>
                                     <span>headers (<span x-text="Object.keys(req.resp_headers||{}).length"></span>)</span>
                                   </summary>
-                                  <pre style="margin:4px 0 0;padding:7px 9px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#71717a;font-size:10px;overflow-x:auto;white-space:pre;max-height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
+                                  <pre style="margin:4px 0 0;padding:7px 9px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#71717a;font-size:0.67rem;overflow-x:auto;white-space:pre;max-height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
                                        x-text="fmtHeaders(req.resp_headers)"></pre>
                                 </details>
-                                <!-- Media preview button -->
                                 <template x-if="req.resp_has_preview">
                                   <button @click.stop="openPreview(proxy, req)"
                                           class="btn btn-ghost"
-                                          style="font-size:11px;padding:4px 10px;margin-bottom:6px;gap:5px">
+                                          style="font-size:0.73rem;padding:4px 10px;margin-bottom:6px;gap:5px">
                                     ▶ Preview
                                   </button>
                                 </template>
-                                <!-- Text body -->
                                 <template x-if="req.resp_body">
-                                  <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:10.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.resp_body)"></pre>
+                                  <pre style="margin:0;padding:8px 10px;background:#0a0a0c;border:1px solid #1a1a1e;border-radius:6px;color:#a1a1aa;font-size:0.7rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;font-family:inherit" x-text="prettyBody(req.resp_body)"></pre>
                                 </template>
                                 <template x-if="!req.resp_body && !req.resp_has_preview">
-                                  <div style="color:#52525b;font-size:10.5px;padding:4px 0"
+                                  <div style="color:#52525b;font-size:0.7rem;padding:4px 0"
                                        x-text="req.resp_size > 0 ? `(binary · ${fmtSize(req.resp_size)})` : '(no body)'"></div>
                                 </template>
                                 <template x-if="!req.resp_body && req.resp_is_media && !req.resp_has_preview">
-                                  <div style="color:#52525b;font-size:10.5px;padding:4px 0"
+                                  <div style="color:#52525b;font-size:0.7rem;padding:4px 0"
                                        x-text="`(media too large to preview · ${fmtSize(req.resp_size)})`"></div>
                                 </template>
                               </div>
@@ -474,13 +550,15 @@
         </template>
       </div>
 
-      <!-- ──────────── Add Proxy Form ──────────── -->
-      <div style="border-top:1px solid #1a1a1e;padding:16px;background:#0d0d0f">
-        <div class="section-label" style="margin-bottom:12px">Add Proxy</div>
+    </div>
+
+    <!-- ──────────── Add Proxy Form ──────────── -->
+    <div class="card" style="padding:16px">
+      <div class="section-label" style="margin-bottom:12px">Add Proxy</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
 
           <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:11px;color:#71717a">Container</label>
+            <label style="font-size:0.73rem;color:#71717a">Container</label>
             <select x-model="form.container" @change="onContainerSelect()" class="field field-mono">
               <option value="">— select —</option>
               <template x-for="c in containers" :key="c.ID">
@@ -491,29 +569,47 @@
           </div>
 
           <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:11px;color:#71717a">Subpath</label>
+            <label style="font-size:0.73rem;color:#71717a">Subpath</label>
             <input id="f-subpath" x-model="form.subpath" type="text" placeholder="tts" spellcheck="false" class="field field-mono">
           </div>
 
           <div style="display:flex;flex-direction:column;gap:5px;grid-column:span 2">
-            <label style="font-size:11px;color:#71717a">Backend URL</label>
+            <label style="font-size:0.73rem;color:#71717a">Backend URL</label>
             <input x-model="form.backend_url" type="text" placeholder="http://localhost:9966" spellcheck="false" class="field field-mono">
           </div>
 
           <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:11px;color:#71717a">Idle timeout (s)</label>
+            <label style="font-size:0.73rem;color:#71717a">Idle timeout (s)</label>
             <input x-model.number="form.idle_timeout" type="number" min="10" class="field field-mono">
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:5px;justify-content:flex-end">
-            <label style="font-size:11px;color:#71717a;opacity:0">.</label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;height:33px"
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:0.73rem;color:#71717a">Max concurrency <span style="color:#3f3f46">(0 = unlimited)</span></label>
+            <input x-model.number="form.max_concurrency" type="number" min="0" class="field field-mono">
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:0.73rem;color:#71717a">Health path</label>
+            <input x-model="form.health_path" type="text" placeholder="/" spellcheck="false" class="field field-mono">
+          </div>
+
+          <div style="grid-column:span 2;display:flex;align-items:center;gap:10px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"
                    @click.prevent="form.auto_unload = !form.auto_unload">
               <div class="toggle-track" :class="form.auto_unload ? 'on' : ''">
                 <div class="toggle-thumb"></div>
               </div>
-              <span style="font-size:12px;color:#a1a1aa;user-select:none">Unload on idle</span>
+              <span style="font-size:0.8rem;color:#a1a1aa;user-select:none">Unload on idle</span>
             </label>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;grid-column:span 2">
+            <label style="font-size:0.73rem;color:#71717a">TTS split mode</label>
+            <select x-model="form.tts_split_mode" class="field field-mono">
+              <option value="none">Off</option>
+              <option value="sentence">Sentence</option>
+              <option value="paragraph">Paragraph</option>
+            </select>
           </div>
 
           <div style="grid-column:span 2;margin-top:2px">
@@ -522,8 +618,8 @@
             </button>
           </div>
 
-        </div>
       </div>
+    </div>
     </div>
   </div>
 </main>
@@ -541,11 +637,9 @@
      @keydown.escape.window="mediaPreview = null">
   <div style="background:#111113;border:1px solid #27272a;border-radius:12px;padding:20px;max-width:92vw;max-height:90vh;overflow:auto;position:relative">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b" x-text="mediaPreview?.ct"></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:#52525b" x-text="mediaPreview?.ct"></span>
       <div style="flex:1"></div>
-      <button @click="mediaPreview = null"
-              style="background:none;border:none;color:#71717a;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px"
-              onmouseover="this.style.color='#d4d4d8'" onmouseout="this.style.color='#71717a'">✕</button>
+      <button @click="mediaPreview = null" class="btn btn-ghost" style="padding:2px 8px;font-size:1.1rem;line-height:1">✕</button>
     </div>
     <template x-if="mediaPreview?.mediaType === 'audio'">
       <audio controls :src="mediaPreview.url" style="width:min(480px,80vw);display:block"></audio>
@@ -567,18 +661,16 @@
      x-transition:leave="transition ease-in duration-100"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     style="position:fixed;bottom:20px;right:20px;padding:9px 16px;border-radius:8px;font-size:12.5px;z-index:50;pointer-events:none;max-width:360px"
+     style="position:fixed;bottom:20px;right:20px;padding:9px 16px;border-radius:8px;font-size:0.83rem;z-index:50;pointer-events:none;max-width:360px"
      :style="toast.err
        ? 'background:#1a0f0f;border:1px solid #5a2020;color:#f87171'
        : 'background:#18181b;border:1px solid #27272a;color:#d4d4d8'"
      x-text="toast.msg">
 </div>
 
-<!-- ═══════════════════════════ RESPONSIVE ══════════════════════ -->
 <style>
-  @media (max-width: 900px) {
-    #main-grid { grid-template-columns: 1fr !important; }
-  }
+  .btn-copy-url { transition: color 0.12s; }
+  .btn-copy-url:hover { color: #a1a1aa !important; }
 </style>
 
 <script>
@@ -591,7 +683,7 @@ function app() {
     containerSearch: '',
     _tick:           0,
     mediaPreview:    null,
-    form: { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false },
+    form: { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false, max_concurrency: 0, health_path: '/', tts_split_mode: 'none' },
     toast: { visible: false, msg: '', err: false },
     _toastTimer: null,
 
@@ -617,7 +709,6 @@ function app() {
         try { this.proxies = JSON.parse(e.data); } catch (_) {}
       };
       this._es = es;
-      // EventSource reconnects automatically on error — no manual retry needed
     },
 
     async refresh() {
@@ -660,8 +751,11 @@ function app() {
     prefill(c) {
       const name = (c.Names || c.Name || '').replace(/^\//, '');
       const port = this.parsePort(c.Ports || '');
-      this.form.container   = name;
-      this.form.subpath     = name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      this.form.container       = name;
+      this.form.subpath         = name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      this.form.max_concurrency = 0;
+      this.form.health_path     = '/';
+      this.form.tts_split_mode  = 'none';
       if (port) this.form.backend_url = `http://localhost:${port}`;
       document.getElementById('f-subpath')?.focus();
     },
@@ -683,7 +777,7 @@ function app() {
     },
 
     idleSec(proxy) {
-      void this._tick; // reactive dependency — recomputes every second
+      void this._tick;
       if (!proxy.last_activity) return null;
       return Math.max(0, Date.now() / 1000 - proxy.last_activity);
     },
@@ -711,13 +805,20 @@ function app() {
     },
 
     statusLabel(proxy) {
-      if (proxy.active_requests > 0)    return `${proxy.active_requests} active`;
+      if (!proxy.enabled) return 'disabled';
+      if (proxy.active_requests > 0) {
+        const q = proxy.queued_requests || 0;
+        return q > 0
+          ? `${proxy.active_requests - q} active · ${q} queued`
+          : `${proxy.active_requests} active`;
+      }
       if (proxy.container_up === true)  return 'running';
       if (proxy.container_up === false) return 'stopped';
       return 'unknown';
     },
 
     statusDot(proxy) {
+      if (!proxy.enabled)               return 'dot-gray';
       if (proxy.active_requests > 0)    return 'dot-blue';
       if (proxy.container_up === true)  return 'dot-green';
       if (proxy.container_up === false) return 'dot-gray';
@@ -725,6 +826,8 @@ function app() {
     },
 
     statusPillStyle(proxy) {
+      if (!proxy.enabled)
+        return 'background:#18181b;color:#52525b;border:1px solid #27272a';
       if (proxy.active_requests > 0)
         return 'background:rgba(96,165,250,0.1);color:#93c5fd;border:1px solid rgba(96,165,250,0.15)';
       if (proxy.container_up === true)
@@ -751,7 +854,7 @@ function app() {
     },
 
     async addProxy() {
-      const { subpath, container, backend_url, idle_timeout, auto_unload } = this.form;
+      const { subpath, container, backend_url, idle_timeout, auto_unload, max_concurrency } = this.form;
       if (!subpath.trim() || !container.trim() || !backend_url.trim()) {
         this.notify('Container, subpath, and backend URL are required', true);
         return;
@@ -761,11 +864,13 @@ function app() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subpath: subpath.trim(), container: container.trim(),
-          backend_url: backend_url.trim(), idle_timeout, auto_unload,
+          backend_url: backend_url.trim(), idle_timeout, auto_unload, max_concurrency,
+          health_path: this.form.health_path || '/',
+          tts_split_mode: this.form.tts_split_mode,
         }),
       });
       if (!r.ok) { this.notify((await r.json()).detail || 'Error', true); return; }
-      this.form = { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false };
+      this.form = { container: '', subpath: '', backend_url: '', idle_timeout: 120, auto_unload: false, max_concurrency: 0, health_path: '/', tts_split_mode: 'none' };
       this.notify(`/${subpath} proxy added`);
       this.loadProxies();
     },
@@ -789,6 +894,22 @@ function app() {
       this.loadProxies();
     },
 
+    async stopProxy(proxy) {
+      this.notify(`Stopping /${proxy.subpath}…`);
+      const r = await fetch(`/api/proxies/${proxy.subpath}/stop`, { method: 'POST' });
+      if (!r.ok) { this.notify((await r.json()).detail || 'Failed', true); return; }
+      this.notify(`/${proxy.subpath} stopped`);
+      this.loadProxies();
+    },
+
+    async restartProxy(proxy) {
+      this.notify(`Restarting /${proxy.subpath}…`);
+      const r = await fetch(`/api/proxies/${proxy.subpath}/restart`, { method: 'POST' });
+      if (!r.ok) { this.notify((await r.json()).detail || 'Failed', true); return; }
+      this.notify(`/${proxy.subpath} restarted`);
+      this.loadProxies();
+    },
+
     async setIdleTimeout(proxy, value) {
       const v = parseInt(value);
       if (!v || v < 10) { this.notify('Idle timeout must be ≥ 10s', true); return; }
@@ -799,6 +920,52 @@ function app() {
         body: JSON.stringify({ idle_timeout: v }),
       });
       this.notify(`/${proxy.subpath} idle timeout → ${v}s`);
+      this.loadProxies();
+    },
+
+    async setTtsSplitMode(proxy, value) {
+      if (value === proxy.tts_split_mode) return;
+      await fetch(`/api/proxies/${proxy.subpath}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tts_split_mode: value }),
+      });
+      this.notify(value === 'none' ? `/${proxy.subpath} TTS split off` : `/${proxy.subpath} TTS split → ${value}`);
+      this.loadProxies();
+    },
+
+    async setEnabled(proxy, value) {
+      await fetch(`/api/proxies/${proxy.subpath}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: value }),
+      });
+      this.notify(`/${proxy.subpath} ${value ? 'enabled' : 'disabled'}`);
+      this.loadProxies();
+    },
+
+    async setHealthPath(proxy, value) {
+      const v = (value || '/').trim() || '/';
+      if (v === proxy.health_path) return;
+      await fetch(`/api/proxies/${proxy.subpath}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ health_path: v }),
+      });
+      this.notify(`/${proxy.subpath} health path → ${v}`);
+      this.loadProxies();
+    },
+
+    async setMaxConcurrency(proxy, value) {
+      const v = parseInt(value);
+      if (isNaN(v) || v < 0) { this.notify('Max concurrency must be ≥ 0', true); return; }
+      if (v === proxy.max_concurrency) return;
+      await fetch(`/api/proxies/${proxy.subpath}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ max_concurrency: v }),
+      });
+      this.notify(`/${proxy.subpath} max concurrency → ${v === 0 ? 'unlimited' : v}`);
       this.loadProxies();
     },
 

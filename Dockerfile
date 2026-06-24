@@ -20,11 +20,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/  ./app/
 COPY static/ ./static/
 
-# Cache CDN assets for offline use
+# Cache vendor assets at build time for offline / air-gapped use
 RUN mkdir -p /app/static/vendor && \
     curl -sL "https://cdn.tailwindcss.com"                                         -o /app/static/vendor/tailwind.js && \
     curl -sL "https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"             -o /app/static/vendor/alpine.min.js
 
 EXPOSE 8474
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8575/api/health || exit 1
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8474", "--log-level", "warning"]
