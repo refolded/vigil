@@ -4,7 +4,10 @@ services:
     # Or build locally:
     build: .
     container_name: idleproxy
-    network_mode: host # so localhost:<port> reaches host-bound containers
+    ports:
+      - "8474:8474"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - proxy-data:/data # persists proxy configs across restarts

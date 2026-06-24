@@ -605,7 +605,8 @@
       </div>
       <pre><span class="c-muted"># pull and run</span>
 docker run -d \
-  --network host \
+  -p 8474:8474 \
+  --add-host=host.docker.internal:host-gateway \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v vigil-data:/data \
   <span class="c-accent">ghcr.io/refolded/vigil:latest</span></pre>
@@ -618,7 +619,10 @@ docker run -d \
       <pre>services:
   vigil:
     image: <span class="c-accent">ghcr.io/refolded/vigil:latest</span>
-    network_mode: host
+    ports:
+      - "8474:8474"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - vigil-data:/data

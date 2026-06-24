@@ -18,7 +18,8 @@ Vigil is a transparent HTTP proxy that stops GPU (or any) Docker containers afte
 
 ```bash
 docker run -d \
-  --network host \
+  -p 8474:8474 \
+  --add-host=host.docker.internal:host-gateway \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v vigil-data:/data \
   ghcr.io/refolded/vigil:latest
@@ -60,7 +61,7 @@ The manual **⏹ Unload / ↺ Restart** button respects the same toggle.
 
 ## Notes
 
-- Requires `network_mode: host` (Linux) so `localhost:<port>` inside the Vigil container resolves to the host's network stack.
 - Docker socket is mounted so Vigil can start/stop containers.
+- Use `host.docker.internal` as the hostname in backend URLs to reach services on the host (e.g. `http://host.docker.internal:9117`). You can also use a LAN IP directly.
 - `/` and `/api/...` are reserved paths and cannot be used as proxy subpaths.
 - Alpine.js and Tailwind CSS are bundled into the image at build time — the UI works fully offline.

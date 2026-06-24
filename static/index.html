@@ -575,7 +575,7 @@
 
           <div style="display:flex;flex-direction:column;gap:5px;grid-column:span 2">
             <label style="font-size:0.73rem;color:#71717a">Backend URL</label>
-            <input x-model="form.backend_url" type="text" placeholder="http://localhost:9966" spellcheck="false" class="field field-mono">
+            <input x-model="form.backend_url" type="text" placeholder="http://host.docker.internal:9966" spellcheck="false" class="field field-mono">
           </div>
 
           <div style="display:flex;flex-direction:column;gap:5px">
@@ -756,7 +756,7 @@ function app() {
       this.form.max_concurrency = 0;
       this.form.health_path     = '/';
       this.form.tts_split_mode  = 'none';
-      if (port) this.form.backend_url = `http://localhost:${port}`;
+      if (port) this.form.backend_url = `http://host.docker.internal:${port}`;
       document.getElementById('f-subpath')?.focus();
     },
 
