@@ -648,14 +648,19 @@
       font-family: monospace;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       margin-top: 2rem;
       border: 1px solid var(--border2);
       border-radius: 8px;
-      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      min-width: 480px;
+      border-collapse: collapse;
+      font-size: 0.875rem;
     }
 
     th {
@@ -1033,7 +1038,7 @@ volumes:
       Open <code>http://localhost:8474</code> — add your first proxy from the web UI.
     </p>
 
-    <table>
+    <div class="table-wrap"><table>
       <thead>
         <tr>
           <th>Variable</th>
@@ -1053,7 +1058,7 @@ volumes:
           <td>Path where proxy configs are persisted</td>
         </tr>
       </tbody>
-    </table>
+    </table></div>
   </div>
 </section>
 
