@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vigil — watch. sleep. wake.</title>
+  <meta name="description" content="Transparent HTTP proxy that stops GPU containers after idle timeout and cold-starts them on the next request. Reclaim VRAM automatically." />
+  <meta property="og:title" content="Vigil — watch. sleep. wake." />
+  <meta property="og:description" content="Transparent HTTP proxy that stops GPU containers after idle timeout and cold-starts them on the next request." />
+  <meta property="og:image" content="screenshot.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --bg2:       #161b22;
+      --bg3:       #21262d;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --green:     #3fb950;
+      --green-dim: #1a4a24;
+      --accent:    #58a6ff;
+      --accent2:   #a371f7;
+      --red:       #f85149;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-brand svg { color: var(--green); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-gh {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text) !important;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .nav-gh:hover {
+      background: var(--bg2);
+      border-color: #8b949e;
+      color: var(--text) !important;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid #2ea04326;
+      border-radius: 999px;
+      padding: 0.25rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1.75rem;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 3.75rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      font-style: italic;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-desc {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 700;
+      padding: 0.65rem 1.5rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-secondary {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      padding: 0.65rem 1.5rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg2);
+      border-color: #8b949e;
+    }
+
+    /* ── Screenshot ── */
+    .screenshot-wrap {
+      max-width: 900px;
+      margin: 0 auto 5rem;
+      padding: 0 1.5rem;
+    }
+
+    .screenshot-frame {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px #ffffff08, 0 24px 80px #000000a0;
+    }
+
+    .screenshot-bar {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .url-bar {
+      flex: 1;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: monospace;
+      margin-left: 0.5rem;
+    }
+
+    .screenshot-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ── Features ── */
+    section { padding: 4rem 2rem; }
+
+    .section-label {
+      text-align: center;
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.75rem;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: clamp(1.6rem, 4vw, 2.25rem);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 540px;
+      margin: 0 auto 3rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover { border-color: #58a6ff40; }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .feature-card p { font-size: 0.9rem; color: var(--muted); }
+
+    /* ── How it works ── */
+    .how-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .step {
+      padding: 1.5rem;
+      position: relative;
+      text-align: center;
+    }
+
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 1.2rem;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0 auto 0.75rem;
+    }
+
+    .step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .step p { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Quick start ── */
+    .quickstart { max-width: 720px; margin: 0 auto; }
+
+    .code-block {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .code-header span { font-family: monospace; }
+
+    pre {
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      line-height: 1.7;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .c-muted { color: var(--muted); }
+    .c-green { color: var(--green); }
+    .c-accent { color: var(--accent); }
+    .c-purple { color: var(--accent2); }
+    .c-orange { color: #ffa657; }
+
+    /* ── Env table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 1.5rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1em 0.4em;
+      font-size: 0.85em;
+      font-family: monospace;
+    }
+
+    /* ── CTA banner ── */
+    .cta-banner {
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #0f2027 100%);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      padding: 5rem 2rem;
+    }
+
+    .cta-banner h2 { margin-bottom: 1rem; }
+    .cta-banner p { color: var(--muted); margin-bottom: 2rem; font-size: 1.05rem; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+      .hero { padding: 3.5rem 1.25rem 2rem; }
+      section { padding: 3rem 1.25rem; }
+      .step:not(:last-child)::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Vigil
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#quickstart">Quick start</a></li>
+    <li>
+      <a class="nav-gh" href="https://github.com/refolded/vigil" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+        GitHub
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="badge">
+    <span class="badge-dot"></span>
+    GPU VRAM management for AI containers
+  </div>
+  <h1>watch.<br>sleep.<br>wake.</h1>
+  <p class="tagline">transparent idle proxy</p>
+  <p class="hero-desc">
+    Vigil sits in front of your AI containers and stops them after they go idle — freeing VRAM automatically. The next request wakes them back up seamlessly.
+  </p>
+  <div class="hero-ctas">
+    <a class="btn-primary" href="#quickstart">Get started</a>
+    <a class="btn-secondary" href="https://github.com/refolded/vigil" target="_blank" rel="noopener">
+      View on GitHub →
+    </a>
+  </div>
+</div>
+
+<!-- Screenshot -->
+<div class="screenshot-wrap">
+  <div class="screenshot-frame">
+    <div class="screenshot-bar">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <div class="url-bar">http://localhost:8474</div>
+    </div>
+    <img src="screenshot.png" alt="Vigil web interface showing container list and active proxies" loading="lazy" />
+  </div>
+</div>
+
+<!-- Features -->
+<section id="features">
+  <p class="section-label">Features</p>
+  <h2>Everything you need, nothing you don't</h2>
+  <p class="section-sub">Built for local AI workloads where VRAM is precious and containers stay loaded forever by default.</p>
+  <div class="features-grid">
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#1a3a1a">🎯</div>
+      <h3>Transparent proxying</h3>
+      <p>All requests pass through untouched — streaming, SSE, chunked responses, large bodies. Your AI clients need zero changes.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#1a2a3a">💤</div>
+      <h3>Idle detection</h3>
+      <p>Per-proxy configurable idle timeout. Stop the container after N seconds of silence, restart or unload on demand.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#2a1a3a">⚡</div>
+      <h3>Cold-start on demand</h3>
+      <p>Incoming request while container is stopped? Vigil starts it, waits for it to be healthy, then forwards — the client just sees a slow first response.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#3a2a1a">🖥️</div>
+      <h3>Live web UI</h3>
+      <p>See all containers, configure proxies, watch idle bars and live request logs. No config files, no YAML.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#1a3a2a">🔒</div>
+      <h3>Concurrency control</h3>
+      <p>Per-proxy max concurrency cap with a semaphore. Protect memory-hungry models from being overwhelmed in parallel.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#3a1a1a">📦</div>
+      <h3>Persistent config</h3>
+      <p>Proxy configs survive restarts via a mounted volume. Set it once, leave it running.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how-it-works" class="how-section">
+  <p class="section-label">How it works</p>
+  <h2>Simple by design</h2>
+  <p class="section-sub">Point your client at Vigil instead of the model container. That's it.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Request arrives</h3>
+      <p>Client sends request to Vigil on the configured subpath</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Wake if needed</h3>
+      <p>If container is stopped, Vigil starts it and waits for health check</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Forward</h3>
+      <p>Request proxied to backend, response streamed back to client</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Count down</h3>
+      <p>Idle timer resets. When it expires, container is stopped or restarted</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quick start -->
+<section id="quickstart">
+  <div class="quickstart">
+    <p class="section-label">Quick start</p>
+    <h2>Up in one command</h2>
+    <p class="section-sub" style="margin-bottom:2rem">Requires Docker and access to <code>/var/run/docker.sock</code>.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span>docker run</span>
+      </div>
+      <pre><span class="c-muted"># pull and run</span>
+docker run -d \
+  --network host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v vigil-data:/data \
+  <span class="c-accent">ghcr.io/refolded/vigil:latest</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span>docker-compose.yml</span>
+      </div>
+      <pre>services:
+  vigil:
+    image: <span class="c-accent">ghcr.io/refolded/vigil:latest</span>
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vigil-data:/data
+    environment:
+      <span class="c-orange">STARTUP_TIMEOUT</span>: <span class="c-green">"120"</span>
+    restart: unless-stopped
+
+volumes:
+  vigil-data:</pre>
+    </div>
+
+    <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem;">
+      Open <code>http://localhost:8474</code> — add your first proxy from the web UI.
+    </p>
+
+    <h3 style="margin-bottom: 1rem; font-size: 1rem;">Environment variables</h3>
+    <div style="background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+      <table>
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>Default</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>STARTUP_TIMEOUT</code></td>
+            <td><code>120</code></td>
+            <td style="color: var(--muted)">Seconds to wait for container to become ready after start</td>
+          </tr>
+          <tr>
+            <td><code>DATA_FILE</code></td>
+            <td><code>/data/proxies.json</code></td>
+            <td style="color: var(--muted)">Path where proxy configs are persisted</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-banner">
+  <h2>Free your VRAM while you sleep</h2>
+  <p>Open source. MIT licensed. Self-hosted in minutes.</p>
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a class="btn-primary" href="https://github.com/refolded/vigil" target="_blank" rel="noopener">Star on GitHub</a>
+    <a class="btn-secondary" href="https://github.com/refolded/vigil/releases" target="_blank" rel="noopener">Releases</a>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <p>
+    Built with ♥ by <a href="https://github.com/refolded" target="_blank" rel="noopener">refolded</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/refolded/vigil/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/refolded/vigil/issues" target="_blank" rel="noopener">Issues</a>
+  </p>
+</footer>
+
+</body>
+</html>

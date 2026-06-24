@@ -4,6 +4,8 @@
 
 Vigil is a transparent HTTP proxy that stops GPU (or any) Docker containers after an idle timeout, then cold-starts them on the next request. A web UI lets you manage multiple proxied containers, set per-container idle timeouts, and monitor live request traffic — all without touching the containers themselves.
 
+![Vigil UI](screenshot.png)
+
 ## How it works
 
 - Sits in front of your AI container on a port you choose
